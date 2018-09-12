@@ -1,0 +1,17 @@
+@charset "UTF-8";
+
+.leftitem {
+	float: left;
+	margin-left: 20px;
+}
+
+.endleft {
+	padding-left: 60px; padding-top : 20px;
+	clear: left;
+	align: center;
+	padding-top: 20px;
+}
+
+.buttonshow{
+	margin-top : 10px;
+}
