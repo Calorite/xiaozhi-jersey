@@ -30,7 +30,6 @@ public class DBService {
             Class.forName(DRIVER);
         } catch (ClassNotFoundException e) {
             System.out.println("加载驱动错误");
-            System.out.println(e.getMessage());
         }
     }
 

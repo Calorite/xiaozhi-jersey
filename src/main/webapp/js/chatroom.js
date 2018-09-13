@@ -82,10 +82,7 @@ $('#textbox').bind('keyup', function(event) {
 resetChat();
 
 //-- Print Messages
-insertChat("me", "臭臭真帅！臭臭好厉害啊", 0);
-insertChat("you", "爱香香哟！", 1500);
-insertChat("me", "爱死臭臭了！", 3500);
-insertChat("you", "哈哈哈哈哈哈哈哈",5000);
+
 //insertChat("me", "Spaceman: Computer! Computer! Do we bring battery?!", 7500);
 //insertChat("you", "LOL", 9200);
 

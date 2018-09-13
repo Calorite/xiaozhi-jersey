@@ -44,4 +44,14 @@ public class ConvertImpl implements ConvertAdapter {
 		return null;
 	}
 
+	@Override
+	public Set<Integer> String2intSet(String str1) {
+		Set<Integer> set1=new HashSet<>();
+		String[] array=str1.split(",");
+		for(String item:array) {
+			set1.add(Integer.valueOf(item));
+		}
+		return set1;
+	}
+
 }

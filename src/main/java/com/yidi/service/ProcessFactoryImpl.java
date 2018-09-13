@@ -55,7 +55,7 @@ public class ProcessFactoryImpl implements ProcessFactory {
 					}
 					returninstance.setUncheckparameter(set1);
 				}
-				
+
 				list1.add(returninstance);
 			}
 			return list1;
@@ -87,17 +87,11 @@ public class ProcessFactoryImpl implements ProcessFactory {
 			String[] params={infoinstance.getUsername(),infoinstance.getRecieved(),infoinstance.getInfo(),datetime,String.valueOf(infoinstance.getId()),infoinstance.getParameter(),String.valueOf(infoinstance.getStatus()),"",String.valueOf(infoinstance.getSpecial())};
 			rows=helper.executeUpdate(sql, params);
 		}
-		
+
 		if (rows>0) {
 			return true;
 		}
 		return false;
-	}
-
-	@Override
-	public String returnsolution(Set<Integer> set) {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 
@@ -153,12 +147,6 @@ public class ProcessFactoryImpl implements ProcessFactory {
 		return 0;
 	}
 
-
-	@Override
-	public ReturnInfo getReturn(Map<Set<Integer>, Integer> parameter_solutionlist, Set<Parameter> initalparameters) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
 	@Override
 	public Set<Integer> getSecondquestion(String id, String recevedmsg, AboutParametersDAO parametersdao)
@@ -318,6 +306,13 @@ public class ProcessFactoryImpl implements ProcessFactory {
 		return null;
 	}
 
-
+	@Override
+	public boolean yesFunction(String text) {
+		BaiduInstance baiduapi=new BaiduInstance();
+		if(baiduapi.sentimentClassify(text).equals("positive")) {
+			return true;
+		}
+		return false;
+	}
 
 }

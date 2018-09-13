@@ -10,4 +10,5 @@ public interface ConvertAdapter {
 	Set String2SetAdapter(String str1);
 	Map<Integer,Parameter> Set2map(Set<Integer> set1,Map<Integer,Parameter> map1);
 	Map<Integer,Parameter> strSet2map(Set<String> set1,Map<Integer,Parameter> map1);
+	Set<Integer> String2intSet(String str1);
 }

@@ -16,8 +16,6 @@ public interface ProcessFactory {
 	Set<Integer> getparametesbyUpperquestion(String id,String recevedmsg,AboutParametersDAO parametersdao) throws SQLException;
 	List<ReturnInfo> returnpassedrecord(int rows,String usrname,DBService helper);
 	int returnstatus(String senderid); //0还在话题中    1话题结束
-	String returnsolution(Set<Integer> set);
-	ReturnInfo getReturn(Map<Set<Integer>, Integer> parameter_solutionlist,Set<Parameter> initalparameters);//0还在话题中的对话
 	Map<Integer, Parameter> getValidparameters(Map<Set<Integer>, ParameterSolution> parameterlist,
 			Set<Parameter> initalset);
 	int getquestionidbyparameterid(int i);
@@ -27,4 +25,5 @@ public interface ProcessFactory {
 	Map<Integer, Parameter> parameterInupperquestion(String id);
 	boolean insertReturnInfo(ReturnInfo infoinstance);
 	List<ReturnInfo> inconversationrecord(String usrname);
+	boolean yesFunction(String text);
 }

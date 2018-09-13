@@ -81,12 +81,10 @@ public class MainService implements TextInfoBytypeFactory {
 							//specialcess.insertpetName(text, senderid);
 							ReturnInfo answeredinfo=answerName(lastRecord.get(0));
 							process.insertReturnInfo(answeredinfo);
-							System.out.println(answeredinfo.getInfo());
 						}else {//正常回答
 							ReturnInfo answeredinfo=answerTypesQuestion(lastRecord);
 							answeredinfo.setRecieved(text);
 							this.reply=answeredinfo.getInfo();
-							System.out.println(answeredinfo.getInfo());
 							process.insertReturnInfo(answeredinfo);
 						}
 					}else{//新话题...
@@ -108,7 +106,6 @@ public class MainService implements TextInfoBytypeFactory {
 			repeatreturn.setSpecial(1);
 			if(process.insertReturnInfo(repeatreturn)){
 				this.reply=repeatreturn.getInfo();
-				System.out.println(repeatreturn.getInfo());
 			}
 		}
 	}
@@ -190,8 +187,6 @@ public class MainService implements TextInfoBytypeFactory {
 
 
 	public ReturnInfo answerUpperquestion(ReturnInfo infoinstance,String text,Map<Integer,Parameter> parameterin) {
-		//Map<Integer, Parameter> targetparameters=process.parameterInupperquestion(infoinstance.getId());
-		//Map<Integer, Parameter> parameterin=process.getInitialParameters(targetparameters, text, parametersdao);
 		Map<Integer,Parameter> preparametersets=new HashMap<Integer, Parameter>();
 		String[] preparamStrarry=infoinstance.getParameter().split(",");
 		for(String id:preparamStrarry) {
@@ -390,26 +385,60 @@ public class MainService implements TextInfoBytypeFactory {
 		return null;
 	}
 
+
+	public Set<Integer> updateParameteset(ReturnInfo lastrecord,String checkedparameter){
+		Set<Integer> unchecked=lastrecord.getUncheckparameter();
+		if(checkedparameter.contains(",")) {
+			String[] checkedarray=checkedparameter.split(",");
+			for(String item:checkedarray) {
+				if(unchecked.contains(Integer.valueOf(item))) {
+					unchecked.remove(Integer.valueOf(item));
+				}
+			}
+		}else{
+			unchecked.remove(Integer.valueOf(checkedparameter));
+		}
+		return unchecked;
+	}
+
+
 	public ReturnInfo answerTypesQuestion(List<ReturnInfo> lastRecord) throws SQLException{
 		if (lastRecord.get(0).getId().contains("A")) {//回答一级问题
 			Map<Integer, Parameter> targetparameters=process.parameterInupperquestion(lastRecord.get(0).getId());
 			Map<Integer, Parameter> parameterin=process.getInitialParameters(targetparameters, text, parametersdao);
 			if(parameterin.size()>0) {//所回内容包括一级问涵括的三级参数
 				ReturnInfo newinfotag=answerUpperquestion(lastRecord.get(0), text, parameterin);
+				newinfotag.setUncheckparameter(updateParameteset(lastRecord.get(0),newinfotag.getParameter()));
 				return newinfotag;
 			}else{//根据uncheckquestion换问题提问
-				//ReturnInfo newinfotag=getReturnMSG(null, );
-				return null;
+				List<String> uncheckupperquestion=new LinkedList<String>();
+				Set<Integer> upcheckparame=lastRecord.get(0).getUncheckparameter();
+				for(Integer id:upcheckparame) {
+					uncheckupperquestion.add(allparamenter.get(id).getUpperquestion());
+				}
+				MaxUpperQuestion maxtimesquestion=getMaxString(uncheckupperquestion,process.inconversationrecord(senderid));
+				ReturnInfo infotag=lastRecord.get(0);
+				if(maxtimesquestion.getCount()>1) {//还有一级问
+					String id=maxtimesquestion.getQuestionid();
+					infotag.setId(id);
+					infotag.setInfo(questiondao.getUpperquestionbyid(id));
+				}else {//没有一级问了
+
+				}
+				return infotag;
 			}
 		}else {//回答普通三级问
 			ReturnInfo newinfotag=null;
 			Map<Integer, Parameter> targetparameters1=questiondao.gettargetparamete(lastRecord.get(0).getId());
 			Map<Integer, Parameter> parameterin1=process.getInitialParameters(targetparameters1, text, parametersdao);
-			newinfotag=answerUpperquestion(lastRecord.get(0), text, parameterin1);
-			if(parameterin1.isEmpty()) {
+			if(parameterin1.isEmpty()) {//回答的内容没有包含三级参数
 				Map<Integer, Parameter> targetparameters=parametersdao.targetparametersbyquestion(lastRecord.get(0).getId());
 				Map<Integer, Parameter> parameterin=process.getInitialParameters(targetparameters, text, parametersdao);
 				newinfotag=answerUpperquestion(lastRecord.get(0), text, parameterin);
+				newinfotag.setUncheckparameter(updateParameteset(lastRecord.get(0),newinfotag.getParameter()));
+			}else {
+				newinfotag=answerUpperquestion(lastRecord.get(0), text, parameterin1);
+				newinfotag.setUncheckparameter(updateParameteset(lastRecord.get(0),newinfotag.getParameter()));
 			}
 			return newinfotag;
 		}
