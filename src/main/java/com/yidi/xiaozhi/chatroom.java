@@ -1,5 +1,5 @@
 
-package com.yidi.xiaozhi_jersey;
+package com.yidi.xiaozhi;
 
 import java.io.IOException;
 import java.sql.SQLException;

@@ -78,7 +78,7 @@ public class MainService implements TextInfoBytypeFactory {
 						}
 					}else if (lastRecord.get(0).getStatus()==0) {//话题中...
 						if(lastRecord.get(0).getSpecial()==1) {//回答的是姓名
-							//specialcess.insertpetName(text, senderid);
+							specialcess.insertpetName(text, senderid);
 							ReturnInfo answeredinfo=answerName(lastRecord.get(0));
 							process.insertReturnInfo(answeredinfo);
 						}else {//正常回答
@@ -423,7 +423,7 @@ public class MainService implements TextInfoBytypeFactory {
 					infotag.setId(id);
 					infotag.setInfo(questiondao.getUpperquestionbyid(id));
 				}else {//没有一级问了
-
+					
 				}
 				return infotag;
 			}
@@ -446,5 +446,31 @@ public class MainService implements TextInfoBytypeFactory {
 
 	public ReturnInfo answerName(ReturnInfo lastRecord) throws SQLException {
 		return newconversation(lastRecord.getRecieved());
+	}
+	
+	//只获取
+	public ReturnInfo getParameterQuestion(Map<Set<Integer>, ParameterSolution> parameter_solutionlist,Map<Integer, Parameter> parameters){
+		Set<Integer> parameteridset=new HashSet<>();
+		for (Integer integer : parameters.keySet()) {
+			parameteridset.add(integer);
+		}
+		Map<Set<Integer>, Integer> parametersolutionnewlist=new HashMap<Set<Integer>, Integer>();
+		for(Set<Integer> key: parameter_solutionlist.keySet()){
+			ParameterSolution thisPS=parameter_solutionlist.get(key);
+			if(key.containsAll(parameteridset)){
+				parametersolutionnewlist.put(key, thisPS.getSolutionrank());
+			}
+		}
+		if(parametersolutionnewlist.size()==1) {//目标parametersolution只有一个了return一个solution
+			Entry<Set<Integer>, Integer> entry = parametersolutionnewlist.entrySet().iterator().next();
+			ParameterSolution firstPS=parameter_solutionlist.get(entry.getKey());
+			return new ReturnInfo(String.valueOf(firstPS.getSolution()), 1, solutiondao.getSolutinStr(String.valueOf(firstPS.getSolution())));
+		}
+		parametersolutionnewlist=sortByValueDesc(parametersolutionnewlist);
+		Entry<Set<Integer>, Integer> entry = parametersolutionnewlist.entrySet().iterator().next();
+		ParameterSolution firstPS=parameter_solutionlist.get(entry.getKey());
+		parametersolutionnewlist.remove(entry.getKey());
+		List<PSranklist> nowpsranklist=sortByrank(firstPS.getParameterset());
+		ReturnInfo infotag=new ReturnInfo(id, status, info);
 	}
 }

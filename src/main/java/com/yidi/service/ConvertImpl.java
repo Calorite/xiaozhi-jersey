@@ -1,5 +1,6 @@
 package com.yidi.service;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -34,8 +35,11 @@ public class ConvertImpl implements ConvertAdapter {
 
 	@Override
 	public Map<Integer, Parameter> Set2map(Set<Integer> set1, Map<Integer, Parameter> map1) {
-		// TODO Auto-generated method stub
-		return null;
+		Map<Integer, Parameter> parametermap=new HashMap<>();
+		for (Integer integer : set1) {
+			parametermap.put(integer, map1.get(integer));
+		}
+		return parametermap;
 	}
 
 	@Override
