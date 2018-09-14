@@ -43,6 +43,7 @@ public class MainService implements TextInfoBytypeFactory {
 	private ConvertAdapter converter;
 	private Map<Integer,Parameter> allparamenter;
 	private List<PetInfo> userpets;
+	private Map<Set<Integer>, ParameterSolution> parameter_solutionlist;
 	Map<Integer, Parameter> initalparameters=new HashMap<Integer, Parameter>();
 	Set<Integer> uncheckparamerters=new HashSet<Integer>();
 
@@ -59,7 +60,9 @@ public class MainService implements TextInfoBytypeFactory {
 		this.text=text;
 		this.userpets=specialcess.getuserpetType(senderid);
 		this.allparamenter=parametersdao.getparams();
+		this.parameter_solutionlist=solutiondao.getsolutionlist();
 		initalparameters=process.getInitialParameters(allparamenter, text,parametersdao);
+
 		//查询历史纪录   宠物类型之类的处理
 		List<ReturnInfo> lastRecord=process.returnpassedrecord(1, senderid,factory.getDBhelper());
 		factory.getDBhelper().closeAll();
@@ -145,9 +148,7 @@ public class MainService implements TextInfoBytypeFactory {
 		try {
 			String targetparamters="";
 			String targetparamters2="";
-			Map<Set<Integer>, ParameterSolution> parameter_solutionlist=solutiondao.getsolutionlist();
 			ReturnInfo infotag=getReturnMSG(parameter_solutionlist, thisinitalparameters);
-
 			Set<Parameter> initalparameterset=new HashSet<Parameter>();
 			for (int id:thisinitalparameters.keySet()) {
 				if(targetparamters.equals("")){
@@ -172,7 +173,7 @@ public class MainService implements TextInfoBytypeFactory {
 			ReturnInfo infotag2=getReturnMSG(parameter_solutionlist, vaildparameters);
 			infotag2.setParameter(targetparamters2);
 			return infotag2;
-		} catch (SQLException e) {
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
@@ -423,6 +424,14 @@ public class MainService implements TextInfoBytypeFactory {
 					infotag.setId(id);
 					infotag.setInfo(questiondao.getUpperquestionbyid(id));
 				}else {//没有一级问了
+					Map<Integer, Parameter> recoredparameter=new HashMap<>();
+					Set<Integer> set1=converter.String2intSet(lastRecord.get(0).getParameter());
+					for(Integer i:set1) {
+						recoredparameter.put(i, allparamenter.get(i));
+					}
+					infotag=getParameterQuestion(parameter_solutionlist, recoredparameter);
+					infotag.setUncheckparameter(lastRecord.get(0).getUncheckparameter());
+
 
 				}
 				return infotag;
@@ -447,4 +456,40 @@ public class MainService implements TextInfoBytypeFactory {
 	public ReturnInfo answerName(ReturnInfo lastRecord) throws SQLException {
 		return newconversation(lastRecord.getRecieved());
 	}
+
+	public ReturnInfo getParameterQuestion(Map<Set<Integer>, ParameterSolution> parameter_solutionlist,Map<Integer, Parameter> parameters){
+		Set<Integer> parameteridset=new HashSet<>();
+		for (Integer integer : parameters.keySet()) {
+			parameteridset.add(integer);
+		}
+		Map<Set<Integer>, Integer> parametersolutionnewlist=new HashMap<Set<Integer>, Integer>();
+		for(Set<Integer> key: parameter_solutionlist.keySet()){
+			ParameterSolution thisPS=parameter_solutionlist.get(key);
+			if(key.containsAll(parameteridset)){
+				parametersolutionnewlist.put(key, thisPS.getSolutionrank());
+			}
+		}
+		if(parametersolutionnewlist.size()==1) {//目标parametersolution只有一个了return一个solution
+			Entry<Set<Integer>, Integer> entry = parametersolutionnewlist.entrySet().iterator().next();
+			ParameterSolution firstPS=parameter_solutionlist.get(entry.getKey());
+			return new ReturnInfo(String.valueOf(firstPS.getSolution()), 1, solutiondao.getSolutinStr(String.valueOf(firstPS.getSolution())));
+		}
+		parametersolutionnewlist=sortByValueDesc(parametersolutionnewlist);
+		Entry<Set<Integer>, Integer> entry = parametersolutionnewlist.entrySet().iterator().next();
+		ParameterSolution firstPS=parameter_solutionlist.get(entry.getKey());
+		parametersolutionnewlist.remove(entry.getKey());
+		List<PSranklist> nowpsranklist=sortByrank(firstPS.getParameterset());
+		for(PSranklist thisp:nowpsranklist){
+			if(parameteridset.contains(thisp.getId())){
+
+			}else {//没有提问的参数
+				int questionid=process.getquestionidbyparameterid(thisp.getId());
+				String question=process.getquestionbyid(String.valueOf(questionid));
+				ReturnInfo infotag=new ReturnInfo(String.valueOf(questionid), 0, question);
+				return infotag;
+			}
+		}
+		return null;
+	}
+
 }
