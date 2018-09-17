@@ -14,7 +14,7 @@ public class BaiduInstance {
 	public static final String API_KEY = "tog9F1yLuvnP8xKOf1iyHfsg";
 	public static final String SECRET_KEY = "7q508DAbFR0uRxuKpTx7Z66fSYjzhYmN";
 	private static Logger log = Logger.getLogger(BaiduInstance.class);
-	public String sentimentClassify(String text) {
+	public static String sentimentClassify(String text) {
 		AipNlp client = new AipNlp(APP_ID, API_KEY, SECRET_KEY);
 
 		// 可选：设置网络连接参数

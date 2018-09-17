@@ -5,7 +5,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import com.yidi.interfactoty.AboutParametersDAO;
 import com.yidi.entity.Parameter;
@@ -13,6 +15,7 @@ import com.yidi.entity.Parameter;
 
 public class AboutParameterImpl implements AboutParametersDAO {
 
+	DBService helper=new DBService();
 	@Override
 	public Map<Integer, Parameter> getparams() throws SQLException {
 		Map<Integer,Parameter> allparamenters=new HashMap<Integer, Parameter>();
@@ -31,7 +34,6 @@ public class AboutParameterImpl implements AboutParametersDAO {
 	public Map<Integer, Parameter> getparams(String id1) throws SQLException {
 		Map<Integer,Parameter> allparamenters=new HashMap<Integer, Parameter>();
 		ResultSet rs;
-		DBService helper=new DBService();
 		String sql="SELECT * FROM ai_qanda.parameter_tb where first="+id1+";";
 		rs=helper.executeQueryRS(sql, null);
 		while(rs.next()) {
@@ -45,7 +47,6 @@ public class AboutParameterImpl implements AboutParametersDAO {
 	public Map<Integer, Parameter> getparams2(String id2) throws SQLException {
 		Map<Integer,Parameter> allparamenters=new HashMap<Integer, Parameter>();
 		ResultSet rs;
-		DBService helper=new DBService();
 		String sql="SELECT * FROM ai_qanda.parameter_tb where second="+id2+";";
 		rs=helper.executeQueryRS(sql, null);
 		while(rs.next()) {
@@ -62,7 +63,7 @@ public class AboutParameterImpl implements AboutParametersDAO {
 			int count=0;
 			for(String parameter:pararray) {
 				if(parameter.contains("!")){
-					if(text.contains(parameter)) {
+					if(text.contains(parameter.replaceAll("!", ""))) {
 
 					}else {
 						count++;
@@ -168,7 +169,6 @@ public class AboutParameterImpl implements AboutParametersDAO {
 	public Map<Integer, Parameter> targetparametersbyquestion(String questionid) {
 		String sql="SELECT * FROM ai_qanda.parameter_tb where id=?;";
 		String[] params={questionid};
-		DBService helper=new DBService();
 		Map<Integer,Parameter> Inparamenter=new HashMap<Integer, Parameter>();
 		ResultSet rs=helper.executeQueryRS(sql, params);
 		try {
@@ -181,4 +181,23 @@ public class AboutParameterImpl implements AboutParametersDAO {
 		}
 		return Inparamenter;
 	}
+
+	@Override
+	public Set<Integer> getparameteFromUpper(String id) {
+		Set<Integer> set1=new HashSet<>();
+		String sql="SELECT * FROM ai_qanda.parameter_tb where first=?";
+		String[] params={id};
+		ResultSet rs=helper.executeQueryRS(sql, params);
+		try {
+			while (rs.next()) {
+				set1.add(rs.getInt(1));				
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return set1;
+	}
+	
+	
 }
