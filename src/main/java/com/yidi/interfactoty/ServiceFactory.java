@@ -12,4 +12,5 @@ public interface ServiceFactory {
 	AboutSolutionDAO getsolutionDao(DBService helper);
 	SpecialprocessFactory getspecialprocess();
 	ConvertAdapter getconverter();
+	AnswerQuestion getanswer();
 }

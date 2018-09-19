@@ -12,10 +12,10 @@ public class Application {
 
 	public static void main(String[] args) throws UnsupportedEncodingException {
 		try {
-			String sender=new String(args[0].getBytes(),"UTF-8");
-			String touser=new String(args[1].getBytes(),"UTF-8");
-			String text=new String(args[2].getBytes(),"UTF-8");
-			MainService main=new MainService(sender, touser,text);
+			//String sender=new String(args[0].getBytes(),"UTF-8");
+			//String touser=new String(args[1].getBytes(),"UTF-8");
+			//String text=new String(args[2].getBytes(),"UTF-8");
+			MainService main=new MainService("test", "test","有变轻");
 			System.out.println(main.getReply());
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block

@@ -211,11 +211,12 @@ public class AboutQuestionImpl implements AboutQuestionDAO {
 		ResultSet rs=helper.executeQueryRS(sql, params);
 		try {
 			while(rs.next()) {
-				String[] parameidarray=rs.getString(4).split(",");
-				String[] paramsarrsy=rs.getString(5).split(",");
+				String[] parameidarray=rs.getString(5).split(",");
+				String[] paramsarrsy=rs.getString(4).split(",");
 				if(parameidarray.length<=paramsarrsy.length) {
 					for(int i=0;i<parameidarray.length;i++) {
-						map1.put(Integer.valueOf(parameidarray[i]), new Parameter(Integer.valueOf(parameidarray[i]),Integer.valueOf(questionid),paramsarrsy[i], 0, ""));
+						Parameter p=new Parameter(Integer.valueOf(parameidarray[i]),Integer.valueOf(questionid),paramsarrsy[i], 0, "");
+						map1.put(Integer.valueOf(parameidarray[i]),p);
 					}
 				}else {
 					for(int i=0;i<paramsarrsy.length;i++) {
@@ -223,6 +224,7 @@ public class AboutQuestionImpl implements AboutQuestionDAO {
 					}
 				}
 			}
+			return map1;
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

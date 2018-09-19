@@ -25,6 +25,7 @@ import com.yidi.entity.ReturnInfo;
 import com.yidi.interfactoty.AboutParametersDAO;
 import com.yidi.interfactoty.AboutQuestionDAO;
 import com.yidi.interfactoty.AboutSolutionDAO;
+import com.yidi.interfactoty.AnswerQuestion;
 import com.yidi.interfactoty.ConvertAdapter;
 import com.yidi.interfactoty.ProcessFactory;
 import com.yidi.interfactoty.SpecialprocessFactory;
@@ -41,6 +42,7 @@ public class MainService implements TextInfoBytypeFactory {
 	private AboutQuestionDAO questiondao;
 	private SpecialprocessFactory specialcess;
 	private ConvertAdapter converter;
+	private AnswerQuestion answer;
 	private Map<Integer,Parameter> allparamenter;
 	private List<PetInfo> userpets;
 	private Map<Set<Integer>, ParameterSolution> parameter_solutionlist;
@@ -55,6 +57,7 @@ public class MainService implements TextInfoBytypeFactory {
 		this.questiondao=factory.getquestionDao(factory.getDBhelper());
 		this.specialcess=factory.getspecialprocess();
 		this.converter=factory.getconverter();
+		this.answer=factory.getanswer();
 		this.senderid=senderid;
 		this.tousr=tousr;
 		this.text=text;
@@ -148,7 +151,7 @@ public class MainService implements TextInfoBytypeFactory {
 		try {
 			String targetparamters="";
 			String targetparamters2="";
-			ReturnInfo infotag=getReturnMSG(parameter_solutionlist, thisinitalparameters);
+			ReturnInfo infotag=process.getReturnMSG(parameter_solutionlist, thisinitalparameters);
 			Set<Parameter> initalparameterset=new HashSet<Parameter>();
 			for (int id:thisinitalparameters.keySet()) {
 				if(targetparamters.equals("")){
@@ -170,7 +173,7 @@ public class MainService implements TextInfoBytypeFactory {
 					targetparamters2=targetparamters2+","+String.valueOf(id);
 				}
 			}
-			ReturnInfo infotag2=getReturnMSG(parameter_solutionlist, vaildparameters);
+			ReturnInfo infotag2=process.getReturnMSG(parameter_solutionlist, vaildparameters);
 			infotag2.setParameter(targetparamters2);
 			return infotag2;
 		} catch (Exception e) {
@@ -213,86 +216,7 @@ public class MainService implements TextInfoBytypeFactory {
 	}
 
 
-	//当前已捕获参数set返回应回复内容
-	public  ReturnInfo getReturnMSG(Map<Set<Integer>, ParameterSolution> parameter_solutionlist,Map<Integer, Parameter> parameters) {
-		Set<Integer> parameteridset= new HashSet<Integer>();
-		String newgetedparameter="";
-		for (int id:parameters.keySet()) {
-			parameteridset.add(id);
-			if(newgetedparameter.equals("")) {
-				newgetedparameter=String.valueOf(id);
-			}else {
-				newgetedparameter=newgetedparameter+","+String.valueOf(id);
-			}
-		}
-		for (Set<Integer> key : parameter_solutionlist.keySet()) {
-			if(key.equals(parameteridset)) {
-				ParameterSolution pSolution=parameter_solutionlist.get(key);
-				int solutionid=pSolution.getSolution();
-				return new ReturnInfo(String.valueOf(solutionid), 1, solutiondao.getSolutinStr(String.valueOf(solutionid)));
-			}
-		}
-		List<String> uncheckupperquestion=new LinkedList<String>();
-		Set<Integer> upcheckparameterid=new HashSet<Integer>();
-		Map<Set<Integer>, Integer> parametersolutionnewlist=new HashMap<Set<Integer>, Integer>();
-		for(Set<Integer> key: parameter_solutionlist.keySet()){
-			ParameterSolution thisPS=parameter_solutionlist.get(key);
-			if(key.containsAll(parameteridset)){
-				parametersolutionnewlist.put(key, thisPS.getSolutionrank());
-			}
-		}
-		if(parametersolutionnewlist.size()==1) {//目标parametersolution只有一个了return一个solution
-			Entry<Set<Integer>, Integer> entry = parametersolutionnewlist.entrySet().iterator().next();
-			ParameterSolution firstPS=parameter_solutionlist.get(entry.getKey());
-			return new ReturnInfo(String.valueOf(firstPS.getSolution()), 1, solutiondao.getSolutinStr(String.valueOf(firstPS.getSolution())));
-		}
-		parametersolutionnewlist=sortByValueDesc(parametersolutionnewlist);
-		Entry<Set<Integer>, Integer> entry = parametersolutionnewlist.entrySet().iterator().next();
-		ParameterSolution firstPS=parameter_solutionlist.get(entry.getKey());
-		parametersolutionnewlist.remove(entry.getKey());
-		List<PSranklist> nowpsranklist=sortByrank(firstPS.getParameterset());
-		int index=0;
-		int questionid=0;
-		String question="";
-		for(PSranklist thisp:nowpsranklist){
-			if(parameteridset.contains(thisp.getId())){
 
-			}else {
-				index++;
-				if(index==1) {
-					questionid=process.getquestionidbyparameterid(thisp.getId());
-					question=process.getquestionbyid(String.valueOf(questionid));
-				}else {
-					uncheckupperquestion.add(allparamenter.get(thisp.getId()).getUpperquestion());
-					upcheckparameterid.add(allparamenter.get(thisp.getId()).getParameterid());
-				}
-			}
-		}
-		for(Set<Integer> key:parametersolutionnewlist.keySet()) {
-			for (Integer id:key) {
-				if (parameteridset.contains(id)) {
-
-				}else {
-					Parameter parame=allparamenter.get(id);
-					if (parame!=null) {
-						uncheckupperquestion.add(parame.getUpperquestion());
-						upcheckparameterid.add(parame.getParameterid());
-					}
-				}
-			}
-		}
-		//MaxUpperQuestion maxtimesquestion=getMaxString(uncheckupperquestion,process.inconversationrecord(senderid));
-		ReturnInfo infotag=null;
-		//if(maxtimesquestion.getCount()>1) {
-		//	String id=maxtimesquestion.getQuestionid();
-		//	infotag=new ReturnInfo(id, 0, questiondao.getUpperquestionbyid(id));
-		//}else {
-			infotag=new ReturnInfo(String.valueOf(questionid), 0, question);
-		//}
-		infotag.setUncheckparameter(upcheckparameterid);
-		infotag.setParameter(newgetedparameter);
-		return infotag;
-	}
 
 	public static <K, V extends Comparable<? super V>> Map<K, V> sortByValueDesc(Map<K, V> map) {
 
@@ -436,15 +360,25 @@ public class MainService implements TextInfoBytypeFactory {
 //				}
 //				return infotag;
 //			}
-		//}else {//回答普通三级问
+		//}else {//回答普通三级问（全局参数）
 			ReturnInfo newinfotag=null;
 			Map<Integer, Parameter> targetparameters1=questiondao.gettargetparamete(lastRecord.get(0).getId());
 			Map<Integer, Parameter> parameterin1=process.getInitialParameters(targetparameters1, text, parametersdao);
-			if(parameterin1.isEmpty()) {//回答的内容没有包含三级参数
+			if(parameterin1.isEmpty()) {//回答的内容没有包含三级参数（全局参数）
 				Map<Integer, Parameter> targetparameters=parametersdao.targetparametersbyquestion(lastRecord.get(0).getId());
 				Map<Integer, Parameter> parameterin=process.getInitialParameters(targetparameters, text, parametersdao);
-				newinfotag=answerUpperquestion(lastRecord.get(0), text, parameterin);
-				newinfotag.setUncheckparameter(updateParameteset(lastRecord.get(0),newinfotag.getParameter()));
+				if(parameterin.isEmpty()) {//回答的内容不是问题内参数，positive和negative判断
+					BaiduInstance aicheck=new BaiduInstance();
+					if(aicheck.sentimentClassify(text).equals("positive")) {//肯定
+						newinfotag=answer.answerNormalQuestion(lastRecord.get(0), questiondao, converter, allparamenter, parameter_solutionlist);
+					}else {//否定
+
+					}
+				}else {
+					newinfotag=answerUpperquestion(lastRecord.get(0), text, parameterin);
+					newinfotag.setUncheckparameter(updateParameteset(lastRecord.get(0),newinfotag.getParameter()));
+				}
+
 			}else {
 				newinfotag=answerUpperquestion(lastRecord.get(0), text, parameterin1);
 				newinfotag.setUncheckparameter(updateParameteset(lastRecord.get(0),newinfotag.getParameter()));

@@ -26,4 +26,5 @@ public interface ProcessFactory {
 	boolean insertReturnInfo(ReturnInfo infoinstance);
 	List<ReturnInfo> inconversationrecord(String usrname);
 	boolean yesFunction(String text);
+	ReturnInfo getReturnMSG(Map<Set<Integer>, ParameterSolution> parameter_solutionlist,Map<Integer, Parameter> parameters);
 }
