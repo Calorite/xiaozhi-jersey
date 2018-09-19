@@ -2,9 +2,11 @@ package com.yidi.service;
 
 import com.yidi.DaoImpl.DBService;
 import com.yidi.DaoImpl.DefaultDaoFactory;
+import com.yidi.Impl.AnswerQuestionImpl;
 import com.yidi.interfactoty.AboutParametersDAO;
 import com.yidi.interfactoty.AboutQuestionDAO;
 import com.yidi.interfactoty.AboutSolutionDAO;
+import com.yidi.interfactoty.AnswerQuestion;
 import com.yidi.interfactoty.ConvertAdapter;
 import com.yidi.interfactoty.DaoFactory;
 import com.yidi.interfactoty.ParameterService;
@@ -67,6 +69,12 @@ public class DefaultServiceFactory implements ServiceFactory {
 	@Override
 	public ConvertAdapter getconverter() {
 		return new ConvertImpl();
+	}
+
+	@Override
+	public AnswerQuestion getanswer() {
+		// TODO Auto-generated method stub
+		return new AnswerQuestionImpl();
 	}
 
 

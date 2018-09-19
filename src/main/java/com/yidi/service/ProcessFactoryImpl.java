@@ -14,14 +14,17 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.Map.Entry;
 
 import com.google.gson.Gson;
 import com.yidi.DaoImpl.DBService;
+import com.yidi.entity.PSranklist;
 import com.yidi.entity.Parameter;
 import com.yidi.entity.ParameterSolution;
 import com.yidi.entity.ReturnInfo;
 import com.yidi.interfactoty.AboutParametersDAO;
+import com.yidi.interfactoty.AboutSolutionDAO;
 import com.yidi.interfactoty.ProcessFactory;
 
 public class ProcessFactoryImpl implements ProcessFactory {
@@ -313,6 +316,94 @@ public class ProcessFactoryImpl implements ProcessFactory {
 			return true;
 		}
 		return false;
+	}
+
+	@Override
+	public ReturnInfo getReturnMSG(Map<Set<Integer>, ParameterSolution> parameter_solutionlist,
+			Map<Integer, Parameter> parameters,AboutSolutionDAO solutiondao,ProcessFactory process) {
+		Set<Integer> parameteridset= new HashSet<Integer>();
+		String newgetedparameter="";
+		for (int id:parameters.keySet()) {
+			parameteridset.add(id);
+			if(newgetedparameter.equals("")) {
+				newgetedparameter=String.valueOf(id);
+			}else {
+				newgetedparameter=newgetedparameter+","+String.valueOf(id);
+			}
+		}
+		for (Set<Integer> key : parameter_solutionlist.keySet()) {
+			if(key.equals(parameteridset)) {
+				ParameterSolution pSolution=parameter_solutionlist.get(key);
+				int solutionid=pSolution.getSolution();
+				return new ReturnInfo(String.valueOf(solutionid), 1, solutiondao.getSolutinStr(String.valueOf(solutionid)));
+			}
+		}
+		List<String> uncheckupperquestion=new LinkedList<String>();
+		Set<Integer> upcheckparameterid=new HashSet<Integer>();
+		Map<Set<Integer>, Integer> parametersolutionnewlist=new HashMap<Set<Integer>, Integer>();
+		for(Set<Integer> key: parameter_solutionlist.keySet()){
+			ParameterSolution thisPS=parameter_solutionlist.get(key);
+			if(key.containsAll(parameteridset)){
+				parametersolutionnewlist.put(key, thisPS.getSolutionrank());
+			}
+		}
+		if(parametersolutionnewlist.size()==1) {//目标parametersolution只有一个了return一个solution
+			Entry<Set<Integer>, Integer> entry = parametersolutionnewlist.entrySet().iterator().next();
+			ParameterSolution firstPS=parameter_solutionlist.get(entry.getKey());
+			return new ReturnInfo(String.valueOf(firstPS.getSolution()), 1, solutiondao.getSolutinStr(String.valueOf(firstPS.getSolution())));
+		}
+		parametersolutionnewlist=sortByValueDesc(parametersolutionnewlist);
+		Entry<Set<Integer>, Integer> entry = parametersolutionnewlist.entrySet().iterator().next();
+		ParameterSolution firstPS=parameter_solutionlist.get(entry.getKey());
+		parametersolutionnewlist.remove(entry.getKey());
+		List<PSranklist> nowpsranklist=sortByrank(firstPS.getParameterset());
+		int index=0;
+		int questionid=0;
+		String question="";
+		for(PSranklist thisp:nowpsranklist){
+			if(parameteridset.contains(thisp.getId())){
+
+			}else {
+				index++;
+				if(index==1) {
+					questionid=process.getquestionidbyparameterid(thisp.getId());
+					question=process.getquestionbyid(String.valueOf(questionid));
+				}else {
+					uncheckupperquestion.add(allparamenter.get(thisp.getId()).getUpperquestion());
+					upcheckparameterid.add(allparamenter.get(thisp.getId()).getParameterid());
+				}
+			}
+		}
+		for(Set<Integer> key:parametersolutionnewlist.keySet()) {
+			for (Integer id:key) {
+				if (parameteridset.contains(id)) {
+
+				}else {
+					Parameter parame=allparamenter.get(id);
+					if (parame!=null) {
+						uncheckupperquestion.add(parame.getUpperquestion());
+						upcheckparameterid.add(parame.getParameterid());
+					}
+				}
+			}
+		}
+		//MaxUpperQuestion maxtimesquestion=getMaxString(uncheckupperquestion,process.inconversationrecord(senderid));
+		ReturnInfo infotag=null;
+		//if(maxtimesquestion.getCount()>1) {
+		//	String id=maxtimesquestion.getQuestionid();
+		//	infotag=new ReturnInfo(id, 0, questiondao.getUpperquestionbyid(id));
+		//}else {
+		infotag=new ReturnInfo(String.valueOf(questionid), 0, question);
+		//}
+		infotag.setUncheckparameter(upcheckparameterid);
+		infotag.setParameter(newgetedparameter);
+		return infotag;
+	}
+	
+	public static List<PSranklist> sortByrank(List<PSranklist> list1) {
+		List<PSranklist> newlist=new LinkedList<PSranklist>();
+		newlist=list1.stream().sorted((u1, u2) -> u2.getRank()-(u1.getRank())).collect(Collectors.toList());
+		return newlist;
 	}
 
 }

@@ -58,4 +58,13 @@ public class ConvertImpl implements ConvertAdapter {
 		return set1;
 	}
 
+	@Override
+	public Set<Parameter> Map2paramterSet(Map<Integer, Parameter> map) {
+		Set<Parameter> set1=new HashSet<>();
+		for(Parameter p:map.values()) {
+			set1.add(p);
+		}
+		return set1;
+	}
+
 }
