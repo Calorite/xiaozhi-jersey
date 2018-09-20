@@ -30,9 +30,6 @@ import com.yidi.interfactoty.ProcessFactory;
 public class ProcessFactoryImpl implements ProcessFactory {
 	Map<Integer,Parameter> allparamenter=null;
 	AboutParametersDAO parametersdao;
-	DefaultServiceFactory factory=new DefaultServiceFactory();
-	ProcessFactory process=factory.getprocessService();
-	AboutSolutionDAO solutiondao=factory.getsolutionDao(factory.getDBhelper());
 	@Override
 	public List<ReturnInfo> returnpassedrecord(int rows,String usrname,DBService helper) {
 		List<ReturnInfo> list1=new LinkedList<ReturnInfo>();
@@ -324,7 +321,7 @@ public class ProcessFactoryImpl implements ProcessFactory {
 
 	//当前已捕获参数set返回应回复内容
 	@Override
-	public  ReturnInfo getReturnMSG(Map<Set<Integer>, ParameterSolution> parameter_solutionlist,Map<Integer, Parameter> parameters) {
+	public  ReturnInfo getReturnMSG(Map<Set<Integer>, ParameterSolution> parameter_solutionlist,Map<Integer, Parameter> parameters,ProcessFactory process,AboutSolutionDAO solutiondao) {
 		Set<Integer> parameteridset= new HashSet<Integer>();
 		String newgetedparameter="";
 		for (int id:parameters.keySet()) {

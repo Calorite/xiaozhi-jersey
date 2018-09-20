@@ -151,7 +151,7 @@ public class MainService implements TextInfoBytypeFactory {
 		try {
 			String targetparamters="";
 			String targetparamters2="";
-			ReturnInfo infotag=process.getReturnMSG(parameter_solutionlist, thisinitalparameters);
+			ReturnInfo infotag=process.getReturnMSG(parameter_solutionlist, thisinitalparameters, process, solutiondao);
 			Set<Parameter> initalparameterset=new HashSet<Parameter>();
 			for (int id:thisinitalparameters.keySet()) {
 				if(targetparamters.equals("")){
@@ -173,7 +173,7 @@ public class MainService implements TextInfoBytypeFactory {
 					targetparamters2=targetparamters2+","+String.valueOf(id);
 				}
 			}
-			ReturnInfo infotag2=process.getReturnMSG(parameter_solutionlist, vaildparameters);
+			ReturnInfo infotag2=process.getReturnMSG(parameter_solutionlist, vaildparameters, process, solutiondao);
 			infotag2.setParameter(targetparamters2);
 			return infotag2;
 		} catch (Exception e) {
@@ -370,7 +370,7 @@ public class MainService implements TextInfoBytypeFactory {
 				if(parameterin.isEmpty()) {//回答的内容不是问题内参数，positive和negative判断
 					BaiduInstance aicheck=new BaiduInstance();
 					if(aicheck.sentimentClassify(text).equals("positive")) {//肯定
-						newinfotag=answer.answerNormalQuestion(lastRecord.get(0), questiondao, converter, allparamenter, parameter_solutionlist);
+						newinfotag=answer.answerNormalQuestion(lastRecord.get(0), questiondao, converter, allparamenter, parameter_solutionlist, process, solutiondao);
 					}else {//否定
 
 					}
