@@ -1,6 +1,7 @@
 package com.yidi.interfactoty;
 
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -23,4 +24,8 @@ public interface AboutParametersDAO {
 	boolean checkRemindParameter(String parameters);
 	
 	Set<Integer> getParametersByquestionid(String questionid);
+	
+	void updateStatus(String username);
+	
+	Set<Integer> updateUncheckParameter(Set<Integer> set1,String usrname);
 }

@@ -321,7 +321,7 @@ public class ProcessFactoryImpl implements ProcessFactory {
 
 	//当前已捕获参数set返回应回复内容
 	@Override
-	public  ReturnInfo getReturnMSG(Map<Set<Integer>, ParameterSolution> parameter_solutionlist,Map<Integer, Parameter> parameters,Map<Integer,Parameter> allparamenter,ProcessFactory process,AboutSolutionDAO solutiondao,AboutParametersDAO parameterdao) {
+	public  ReturnInfo getReturnMSG(Map<Set<Integer>, ParameterSolution> parameter_solutionlist,Map<Integer, Parameter> parameters,Map<Integer,Parameter> allparamenter,ProcessFactory process,AboutSolutionDAO solutiondao,AboutParametersDAO parameterdao,String usrname) {
 		Set<Integer> parameteridset= new HashSet<Integer>();
 		String newgetedparameter="";
 		for (int id:parameters.keySet()) {
@@ -394,13 +394,8 @@ public class ProcessFactoryImpl implements ProcessFactory {
 		}
 		//MaxUpperQuestion maxtimesquestion=getMaxString(uncheckupperquestion,process.inconversationrecord(senderid));
 		ReturnInfo infotag=null;
-		//if(maxtimesquestion.getCount()>1) {
-		//	String id=maxtimesquestion.getQuestionid();
-		//	infotag=new ReturnInfo(id, 0, questiondao.getUpperquestionbyid(id));
-		//}else {
 		infotag=new ReturnInfo(String.valueOf(questionid), 0, question);
-		//}
-		infotag.setUncheckparameter(upcheckparameterid);
+		infotag.setUncheckparameter(parameterdao.updateUncheckParameter(upcheckparameterid, usrname));
 		if (upcheckparameterid.isEmpty()) {//问完了
 			if (infotag.getStatus()==0) {//没有出solution
 				if (parameterdao.checkRemindParameter(infotag.getParameter())) {

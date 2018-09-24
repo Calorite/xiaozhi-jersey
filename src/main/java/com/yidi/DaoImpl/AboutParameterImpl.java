@@ -169,7 +169,7 @@ public class AboutParameterImpl implements AboutParametersDAO {
 
 	@Override
 	public Map<Integer, Parameter> targetparametersbyquestion(String questionid) {
-		String sql="SELECT * FROM ai_qanda.parameter_tb where id=?;";
+		String sql="SELECT * FROM ai_qanda.parameter_tb where quesid=?;";
 		String[] params={questionid};
 		DBService helper=new DBService();
 		Map<Integer,Parameter> Inparamenter=new HashMap<Integer, Parameter>();
@@ -222,6 +222,33 @@ public class AboutParameterImpl implements AboutParametersDAO {
 			e.printStackTrace();
 		}		
 		helper.closeAll();
+		return set1;
+	}
+
+	@Override
+	public void updateStatus(String username) {
+		String sql="update ai_qanda.user_dialogue_tb set type=1 where username=?;";
+		DBService helper=new DBService();
+		String[] params={username};
+		helper.executeUpdate(sql, params);	
+	}
+
+	@Override
+	public Set<Integer> updateUncheckParameter(Set<Integer> set1, String usrname) {
+		DBService helper=new DBService();
+		String[] params={usrname};
+		String sql="SELECT parameter_tb.id FROM ai_qanda.parameter_tb right join ai_qanda.user_dialogue_tb on ai_qanda.parameter_tb.quesid=ai_qanda.user_dialogue_tb.replyid where user_dialogue_tb.type=0 and user_dialogue_tb.username=?;";
+		ResultSet rs=helper.executeQueryRS(sql, params);
+		try {
+			while (rs.next()) {
+				if (set1.contains(rs.getInt(1))) {
+					set1.remove(rs.getInt(1));
+				}
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		return set1;
 	}
 }
