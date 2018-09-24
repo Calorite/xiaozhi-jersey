@@ -28,8 +28,8 @@ import com.yidi.interfactoty.AboutSolutionDAO;
 import com.yidi.interfactoty.ProcessFactory;
 
 public class ProcessFactoryImpl implements ProcessFactory {
-	Map<Integer,Parameter> allparamenter=null;
-	AboutParametersDAO parametersdao;
+	//Map<Integer,Parameter> allparamenter=null;
+	//AboutParametersDAO parametersdao;
 	@Override
 	public List<ReturnInfo> returnpassedrecord(int rows,String usrname,DBService helper) {
 		List<ReturnInfo> list1=new LinkedList<ReturnInfo>();
@@ -321,7 +321,7 @@ public class ProcessFactoryImpl implements ProcessFactory {
 
 	//当前已捕获参数set返回应回复内容
 	@Override
-	public  ReturnInfo getReturnMSG(Map<Set<Integer>, ParameterSolution> parameter_solutionlist,Map<Integer, Parameter> parameters,ProcessFactory process,AboutSolutionDAO solutiondao) {
+	public  ReturnInfo getReturnMSG(Map<Set<Integer>, ParameterSolution> parameter_solutionlist,Map<Integer, Parameter> parameters,Map<Integer,Parameter> allparamenter,ProcessFactory process,AboutSolutionDAO solutiondao,AboutParametersDAO parameterdao) {
 		Set<Integer> parameteridset= new HashSet<Integer>();
 		String newgetedparameter="";
 		for (int id:parameters.keySet()) {
@@ -339,7 +339,7 @@ public class ProcessFactoryImpl implements ProcessFactory {
 				return new ReturnInfo(String.valueOf(solutionid), 1, solutiondao.getSolutinStr(String.valueOf(solutionid)));
 			}
 		}
-		List<String> uncheckupperquestion=new LinkedList<String>();
+		//List<String> uncheckupperquestion=new LinkedList<String>();
 		Set<Integer> upcheckparameterid=new HashSet<Integer>();
 		Map<Set<Integer>, Integer> parametersolutionnewlist=new HashMap<Set<Integer>, Integer>();
 		for(Set<Integer> key: parameter_solutionlist.keySet()){
@@ -348,11 +348,11 @@ public class ProcessFactoryImpl implements ProcessFactory {
 				parametersolutionnewlist.put(key, thisPS.getSolutionrank());
 			}
 		}
-		if(parametersolutionnewlist.size()==1) {//目标parametersolution只有一个了return一个solution
-			Entry<Set<Integer>, Integer> entry = parametersolutionnewlist.entrySet().iterator().next();
-			ParameterSolution firstPS=parameter_solutionlist.get(entry.getKey());
-			return new ReturnInfo(String.valueOf(firstPS.getSolution()), 1, solutiondao.getSolutinStr(String.valueOf(firstPS.getSolution())));
-		}
+		//if(parametersolutionnewlist.size()==1) {//目标parametersolution只有一个了return一个solution
+		//	Entry<Set<Integer>, Integer> entry = parametersolutionnewlist.entrySet().iterator().next();
+		//	ParameterSolution firstPS=parameter_solutionlist.get(entry.getKey());
+		//	return new ReturnInfo(String.valueOf(firstPS.getSolution()), 1, solutiondao.getSolutinStr(String.valueOf(firstPS.getSolution())));
+		//}
 		parametersolutionnewlist=sortByValueDesc(parametersolutionnewlist);
 		Entry<Set<Integer>, Integer> entry = parametersolutionnewlist.entrySet().iterator().next();
 		ParameterSolution firstPS=parameter_solutionlist.get(entry.getKey());
@@ -370,8 +370,12 @@ public class ProcessFactoryImpl implements ProcessFactory {
 					questionid=process.getquestionidbyparameterid(thisp.getId());
 					question=process.getquestionbyid(String.valueOf(questionid));
 				}else {
-					uncheckupperquestion.add(allparamenter.get(thisp.getId()).getUpperquestion());
-					upcheckparameterid.add(allparamenter.get(thisp.getId()).getParameterid());
+					//uncheckupperquestion.add(allparamenter.get(thisp.getId()).getUpperquestion());
+					Parameter param=allparamenter.get(thisp.getId());
+					if(param!=null){
+						upcheckparameterid.add(param.getParameterid());
+					}
+					
 				}
 			}
 		}
@@ -382,7 +386,7 @@ public class ProcessFactoryImpl implements ProcessFactory {
 				}else {
 					Parameter parame=allparamenter.get(id);
 					if (parame!=null) {
-						uncheckupperquestion.add(parame.getUpperquestion());
+						//uncheckupperquestion.add(parame.getUpperquestion());
 						upcheckparameterid.add(parame.getParameterid());
 					}
 				}
@@ -397,6 +401,18 @@ public class ProcessFactoryImpl implements ProcessFactory {
 		infotag=new ReturnInfo(String.valueOf(questionid), 0, question);
 		//}
 		infotag.setUncheckparameter(upcheckparameterid);
+		if (upcheckparameterid.isEmpty()) {//问完了
+			if (infotag.getStatus()==0) {//没有出solution
+				if (parameterdao.checkRemindParameter(infotag.getParameter())) {
+					infotag.setId("remind");
+					infotag.setInfo("推荐就医");
+				}else {
+					infotag.setId("remind");
+					infotag.setInfo("宠友小智！您身边的养宠专家！");
+				}
+			}
+			
+		}
 		infotag.setParameter(newgetedparameter);
 		return infotag;
 	}
@@ -406,5 +422,22 @@ public class ProcessFactoryImpl implements ProcessFactory {
 		List<PSranklist> newlist=new LinkedList<PSranklist>();
 		newlist=list1.stream().sorted((u1, u2) -> u2.getRank()-(u1.getRank())).collect(Collectors.toList());
 		return newlist;
+	}
+
+	@Override
+	public Set<Integer> updatebyChecked(Set<Integer> set1, String checked) {
+		if (checked.contains(",")) {
+			String[] checkedarray=checked.split(",");
+			for (int i = 0; i < checkedarray.length; i++) {
+				if (set1.contains(Integer.valueOf(checkedarray[i]))) {
+					set1.remove(Integer.valueOf(checkedarray[i]));
+				}
+			}
+		}else {
+			if(set1.contains(Integer.valueOf(checked))){
+				set1.remove(Integer.valueOf(checked));
+			}	
+		}
+		return set1;
 	}
 }

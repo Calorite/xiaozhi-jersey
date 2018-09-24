@@ -5,9 +5,12 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import com.yidi.interfactoty.AboutParametersDAO;
+import com.yidi.service.ConvertImpl;
 import com.yidi.entity.Parameter;
 
 
@@ -179,6 +182,46 @@ public class AboutParameterImpl implements AboutParametersDAO {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		helper.closeAll();
 		return Inparamenter;
+	}
+
+	@Override
+	public boolean checkRemindParameter(String parameters) {
+		String sql="SELECT * FROM ai_qanda.parameter_tb where id in (?);";
+		DBService helper=new DBService();
+		String[] params={parameters};
+		ResultSet rs=helper.executeQueryRS(sql, params);
+		try {
+			while (rs.next()) {
+				int remindflag=rs.getInt(10);
+				if(remindflag==1){
+					return true;
+				}
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return false;
+	}
+
+	@Override
+	public Set<Integer> getParametersByquestionid(String questionid) {
+		Set<Integer> set1=new HashSet<>();
+		DBService helper=new DBService();
+		String sql="SELECT * FROM ai_qanda.parameter_tb where quesid=?;";
+		String[] params={questionid};
+		ResultSet rs=helper.executeQueryRS(sql, params);
+		try {
+			while (rs.next()) {
+				set1.add(rs.getInt(1));
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}		
+		helper.closeAll();
+		return set1;
 	}
 }

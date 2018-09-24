@@ -51,8 +51,10 @@ public class chatroom {
 	public String getreply(@FormParam("inputtext") String text) throws SQLException {
     	Gson gson=new Gson();
     	MainService main=new MainService("test", "", text);
+    	String teString=main.getReply();
     	if(main.getReply().equals("")) {
-    		return "api";
+    		TestInfoItem instance=new TestInfoItem(main.getSenderid(),"api");
+        	return gson.toJson(instance);
     	}
     	TestInfoItem instance=new TestInfoItem(main.getSenderid(), main.getReply());
     	return gson.toJson(instance);

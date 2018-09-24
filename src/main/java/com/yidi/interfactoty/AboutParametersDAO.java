@@ -2,6 +2,7 @@ package com.yidi.interfactoty;
 
 import java.sql.SQLException;
 import java.util.Map;
+import java.util.Set;
 
 import com.yidi.entity.Parameter;
 
@@ -18,4 +19,8 @@ public interface AboutParametersDAO {
 	Map<Integer, Parameter> getparams2(String id2) throws SQLException;
 
 	Map<Integer, Parameter> targetparametersbyquestion(String questionid);
+	
+	boolean checkRemindParameter(String parameters);
+	
+	Set<Integer> getParametersByquestionid(String questionid);
 }

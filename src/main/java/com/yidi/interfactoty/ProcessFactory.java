@@ -26,5 +26,6 @@ public interface ProcessFactory {
 	boolean insertReturnInfo(ReturnInfo infoinstance);
 	List<ReturnInfo> inconversationrecord(String usrname);
 	boolean yesFunction(String text);
-	ReturnInfo getReturnMSG(Map<Set<Integer>, ParameterSolution> parameter_solutionlist,Map<Integer, Parameter> parameters,ProcessFactory process,AboutSolutionDAO solutiondao);
+	ReturnInfo getReturnMSG(Map<Set<Integer>, ParameterSolution> parameter_solutionlist,Map<Integer, Parameter> parameters,Map<Integer,Parameter> allparamenter,ProcessFactory process,AboutSolutionDAO solutiondao,AboutParametersDAO parameterdao);
+	Set<Integer> updatebyChecked(Set<Integer> set1,String checked);
 }

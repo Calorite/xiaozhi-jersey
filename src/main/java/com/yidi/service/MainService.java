@@ -83,16 +83,12 @@ public class MainService implements TextInfoBytypeFactory {
 							process.insertReturnInfo(answeredinfo);
 						}
 					}else if (lastRecord.get(0).getStatus()==0) {//话题中...
-						if(lastRecord.get(0).getSpecial()==1) {//回答的是姓名
-							//specialcess.insertpetName(text, senderid);
-							ReturnInfo answeredinfo=answerName(lastRecord.get(0));
-							process.insertReturnInfo(answeredinfo);
-						}else {//正常回答
+						    //正常回答
 							ReturnInfo answeredinfo=answerTypesQuestion(lastRecord);
 							answeredinfo.setRecieved(text);
+							answeredinfo.setUsername(senderid);
 							this.reply=answeredinfo.getInfo();
 							process.insertReturnInfo(answeredinfo);
-						}
 					}else{//新话题...
 						if(initalparameters.size()==0){//没有参数
 							//API
@@ -106,6 +102,12 @@ public class MainService implements TextInfoBytypeFactory {
 			}else {//多只宠物
 
 			}
+		}else if(!lastRecord.isEmpty()&&lastRecord.get(0).getSpecial()==1){//回答的是姓名
+			specialcess.insertpetName(text, senderid);
+			ReturnInfo answeredinfo=answerName(lastRecord.get(0));	
+			answeredinfo.setRecieved(text);
+			process.insertReturnInfo(answeredinfo);
+			this.reply=answeredinfo.getInfo();
 		}else {//请告诉我您家宠物的信息
 			ReturnInfo repeatreturn=newconversation(text);
 			repeatreturn.setInfo("请告诉我您家宠物的昵称");
@@ -151,7 +153,7 @@ public class MainService implements TextInfoBytypeFactory {
 		try {
 			String targetparamters="";
 			String targetparamters2="";
-			ReturnInfo infotag=process.getReturnMSG(parameter_solutionlist, thisinitalparameters, process, solutiondao);
+			ReturnInfo infotag=process.getReturnMSG(parameter_solutionlist, thisinitalparameters, allparamenter, process, solutiondao, parametersdao);
 			Set<Parameter> initalparameterset=new HashSet<Parameter>();
 			for (int id:thisinitalparameters.keySet()) {
 				if(targetparamters.equals("")){
@@ -173,7 +175,7 @@ public class MainService implements TextInfoBytypeFactory {
 					targetparamters2=targetparamters2+","+String.valueOf(id);
 				}
 			}
-			ReturnInfo infotag2=process.getReturnMSG(parameter_solutionlist, vaildparameters, process, solutiondao);
+			ReturnInfo infotag2=process.getReturnMSG(parameter_solutionlist, vaildparameters, allparamenter, process, solutiondao, parametersdao);
 			infotag2.setParameter(targetparamters2);
 			return infotag2;
 		} catch (Exception e) {
@@ -328,39 +330,6 @@ public class MainService implements TextInfoBytypeFactory {
 
 
 	public ReturnInfo answerTypesQuestion(List<ReturnInfo> lastRecord) throws SQLException{
-//		if (lastRecord.get(0).getId().contains("A")) {//回答一级问题
-//			Map<Integer, Parameter> targetparameters=process.parameterInupperquestion(lastRecord.get(0).getId());
-//			Map<Integer, Parameter> parameterin=process.getInitialParameters(targetparameters, text, parametersdao);
-//			if(parameterin.size()>0) {//所回内容包括一级问涵括的三级参数
-//				ReturnInfo newinfotag=answerUpperquestion(lastRecord.get(0), text, parameterin);
-//				newinfotag.setUncheckparameter(updateParameteset(lastRecord.get(0),newinfotag.getParameter()));
-//				return newinfotag;
-//			}else{//根据uncheckquestion换问题提问
-//				List<String> uncheckupperquestion=new LinkedList<String>();
-//				Set<Integer> upcheckparame=lastRecord.get(0).getUncheckparameter();
-//				for(Integer id:upcheckparame) {
-//					uncheckupperquestion.add(allparamenter.get(id).getUpperquestion());
-//				}
-//				MaxUpperQuestion maxtimesquestion=getMaxString(uncheckupperquestion,process.inconversationrecord(senderid));
-//				ReturnInfo infotag=lastRecord.get(0);
-//				if(maxtimesquestion.getCount()>1) {//还有一级问
-//					String id=maxtimesquestion.getQuestionid();
-//					infotag.setId(id);
-//					infotag.setInfo(questiondao.getUpperquestionbyid(id));
-//				}else {//没有一级问了
-//					Map<Integer, Parameter> recoredparameter=new HashMap<>();
-//					Set<Integer> set1=converter.String2intSet(lastRecord.get(0).getParameter());
-//					for(Integer i:set1) {
-//						recoredparameter.put(i, allparamenter.get(i));
-//					}
-//					infotag=getParameterQuestion(parameter_solutionlist, recoredparameter);
-//					infotag.setUncheckparameter(lastRecord.get(0).getUncheckparameter());
-//
-//
-//				}
-//				return infotag;
-//			}
-		//}else {//回答普通三级问（全局参数）
 			ReturnInfo newinfotag=null;
 			Map<Integer, Parameter> targetparameters1=questiondao.gettargetparamete(lastRecord.get(0).getId());
 			Map<Integer, Parameter> parameterin1=process.getInitialParameters(targetparameters1, text, parametersdao);
@@ -370,9 +339,10 @@ public class MainService implements TextInfoBytypeFactory {
 				if(parameterin.isEmpty()) {//回答的内容不是问题内参数，positive和negative判断
 					BaiduInstance aicheck=new BaiduInstance();
 					if(aicheck.sentimentClassify(text).equals("positive")) {//肯定
-						newinfotag=answer.answerNormalQuestion(lastRecord.get(0), questiondao, converter, allparamenter, parameter_solutionlist, process, solutiondao);
+						newinfotag=answer.answerNormalQuestion(lastRecord.get(0), questiondao, converter, allparamenter, parameter_solutionlist, process, solutiondao, parametersdao);
 					}else {//否定
-
+						newinfotag=answer.NegativeAnswer(lastRecord.get(0), allparamenter, parameter_solutionlist, questiondao, converter, process, solutiondao,parametersdao);
+						
 					}
 				}else {
 					newinfotag=answerUpperquestion(lastRecord.get(0), text, parameterin);
@@ -384,7 +354,6 @@ public class MainService implements TextInfoBytypeFactory {
 				newinfotag.setUncheckparameter(updateParameteset(lastRecord.get(0),newinfotag.getParameter()));
 			}
 			return newinfotag;
-		//}
 	}
 
 	public ReturnInfo answerName(ReturnInfo lastRecord) throws SQLException {
@@ -403,11 +372,11 @@ public class MainService implements TextInfoBytypeFactory {
 				parametersolutionnewlist.put(key, thisPS.getSolutionrank());
 			}
 		}
-		if(parametersolutionnewlist.size()==1) {//目标parametersolution只有一个了return一个solution
-			Entry<Set<Integer>, Integer> entry = parametersolutionnewlist.entrySet().iterator().next();
-			ParameterSolution firstPS=parameter_solutionlist.get(entry.getKey());
-			return new ReturnInfo(String.valueOf(firstPS.getSolution()), 1, solutiondao.getSolutinStr(String.valueOf(firstPS.getSolution())));
-		}
+		//if(parametersolutionnewlist.size()==1) {//目标parametersolution只有一个了return一个solution
+		//	Entry<Set<Integer>, Integer> entry = parametersolutionnewlist.entrySet().iterator().next();
+		//	ParameterSolution firstPS=parameter_solutionlist.get(entry.getKey());
+		//	return new ReturnInfo(String.valueOf(firstPS.getSolution()), 1, solutiondao.getSolutinStr(String.valueOf(firstPS.getSolution())));
+		//}
 		parametersolutionnewlist=sortByValueDesc(parametersolutionnewlist);
 		Entry<Set<Integer>, Integer> entry = parametersolutionnewlist.entrySet().iterator().next();
 		ParameterSolution firstPS=parameter_solutionlist.get(entry.getKey());
