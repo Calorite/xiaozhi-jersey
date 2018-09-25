@@ -156,7 +156,7 @@ public class MainService implements TextInfoBytypeFactory {
 		try {
 			String targetparamters="";
 			String targetparamters2="";
-			ReturnInfo infotag=process.getReturnMSG(parameter_solutionlist, thisinitalparameters, allparamenter, process, solutiondao, parametersdao, senderid);
+			ReturnInfo infotag=process.getReturnMSG(parameter_solutionlist, thisinitalparameters, allparamenter, process, solutiondao, parametersdao, answer, senderid);
 			Set<Parameter> initalparameterset=new HashSet<Parameter>();
 			for (int id:thisinitalparameters.keySet()) {
 				if(targetparamters.equals("")){
@@ -178,7 +178,7 @@ public class MainService implements TextInfoBytypeFactory {
 					targetparamters2=targetparamters2+","+String.valueOf(id);
 				}
 			}
-			ReturnInfo infotag2=process.getReturnMSG(parameter_solutionlist, vaildparameters, allparamenter, process, solutiondao, parametersdao, senderid);
+			ReturnInfo infotag2=process.getReturnMSG(parameter_solutionlist, vaildparameters, allparamenter, process, solutiondao, parametersdao, answer, senderid);
 			infotag2.setParameter(targetparamters2);
 			return infotag2;
 		} catch (Exception e) {
@@ -342,9 +342,9 @@ public class MainService implements TextInfoBytypeFactory {
 				if(parameterin.isEmpty()) {//回答的内容不是问题内参数，positive和negative判断
 					BaiduInstance aicheck=new BaiduInstance();
 					if(aicheck.sentimentClassify(text).equals("positive")) {//肯定
-						newinfotag=answer.answerNormalQuestion(lastRecord.get(0), questiondao, converter, allparamenter, parameter_solutionlist, process, solutiondao, parametersdao, senderid);
+						newinfotag=answer.answerNormalQuestion(lastRecord.get(0), questiondao, converter, allparamenter, parameter_solutionlist, process, solutiondao, parametersdao, answer, senderid);
 					}else {//否定
-						newinfotag=answer.NegativeAnswer(lastRecord.get(0), allparamenter, parameter_solutionlist, questiondao, converter, process, solutiondao,parametersdao, senderid);
+						newinfotag=answer.NegativeAnswer(lastRecord.get(0), allparamenter, parameter_solutionlist, questiondao, converter, process, solutiondao,parametersdao, answer, senderid);
 						Set<Integer> parameset=parametersdao.getParametersByquestionid(lastRecord.get(0).getId());
 						newinfotag.setParameter(lastRecord.get(0).getParameter());
 					}

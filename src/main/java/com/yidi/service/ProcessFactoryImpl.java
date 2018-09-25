@@ -25,6 +25,7 @@ import com.yidi.entity.ParameterSolution;
 import com.yidi.entity.ReturnInfo;
 import com.yidi.interfactoty.AboutParametersDAO;
 import com.yidi.interfactoty.AboutSolutionDAO;
+import com.yidi.interfactoty.AnswerQuestion;
 import com.yidi.interfactoty.ProcessFactory;
 
 public class ProcessFactoryImpl implements ProcessFactory {
@@ -321,7 +322,7 @@ public class ProcessFactoryImpl implements ProcessFactory {
 
 	//当前已捕获参数set返回应回复内容
 	@Override
-	public  ReturnInfo getReturnMSG(Map<Set<Integer>, ParameterSolution> parameter_solutionlist,Map<Integer, Parameter> parameters,Map<Integer,Parameter> allparamenter,ProcessFactory process,AboutSolutionDAO solutiondao,AboutParametersDAO parameterdao,String usrname) {
+	public  ReturnInfo getReturnMSG(Map<Set<Integer>, ParameterSolution> parameter_solutionlist,Map<Integer, Parameter> parameters,Map<Integer,Parameter> allparamenter,ProcessFactory process,AboutSolutionDAO solutiondao,AboutParametersDAO parameterdao,AnswerQuestion answer,String usrname) {
 		Set<Integer> parameteridset= new HashSet<Integer>();
 		String newgetedparameter="";
 		for (int id:parameters.keySet()) {
@@ -364,19 +365,25 @@ public class ProcessFactoryImpl implements ProcessFactory {
 		for(PSranklist thisp:nowpsranklist){
 			if(parameteridset.contains(thisp.getId())){
 
-			}else {
-				index++;
-				if(index==1) {
-					questionid=process.getquestionidbyparameterid(thisp.getId());
-					question=process.getquestionbyid(String.valueOf(questionid));
-				}else {
-					//uncheckupperquestion.add(allparamenter.get(thisp.getId()).getUpperquestion());
-					Parameter param=allparamenter.get(thisp.getId());
-					if(param!=null){
-						upcheckparameterid.add(param.getParameterid());
-					}
+			}else {			
+				int curquesid=process.getquestionidbyparameterid(thisp.getId());
+				if (answer.IsAskedQuestion(String.valueOf(curquesid), usrname)) {
 					
+				}else {
+					index++;
+					if(index==1) {
+						questionid=process.getquestionidbyparameterid(thisp.getId());
+						question=process.getquestionbyid(String.valueOf(questionid));
+					}else {
+						//uncheckupperquestion.add(allparamenter.get(thisp.getId()).getUpperquestion());
+						Parameter param=allparamenter.get(thisp.getId());
+						if(param!=null){
+							upcheckparameterid.add(param.getParameterid());
+						}
+						
+					}
 				}
+				
 			}
 		}
 		for(Set<Integer> key:parametersolutionnewlist.keySet()) {
