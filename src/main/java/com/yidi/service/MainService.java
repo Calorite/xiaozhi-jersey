@@ -107,7 +107,7 @@ public class MainService implements TextInfoBytypeFactory {
 			}
 		}else if(!lastRecord.isEmpty()&&lastRecord.get(0).getSpecial()==1){//回答的是姓名
 			specialcess.insertpetName(text, senderid);
-			ReturnInfo answeredinfo=answerName(lastRecord.get(0));	
+			ReturnInfo answeredinfo=answerName(lastRecord.get(0));
 			answeredinfo.setRecieved(text);
 			process.insertReturnInfo(answeredinfo);
 			this.reply=answeredinfo.getInfo();
@@ -340,13 +340,23 @@ public class MainService implements TextInfoBytypeFactory {
 				Map<Integer, Parameter> targetparameters=parametersdao.targetparametersbyquestion(lastRecord.get(0).getId());
 				Map<Integer, Parameter> parameterin=process.getInitialParameters(targetparameters, text, parametersdao);
 				if(parameterin.isEmpty()) {//回答的内容不是问题内参数，positive和negative判断
-					BaiduInstance aicheck=new BaiduInstance();
-					if(aicheck.sentimentClassify(text).equals("positive")) {//肯定
-						newinfotag=answer.answerNormalQuestion(lastRecord.get(0), questiondao, converter, allparamenter, parameter_solutionlist, process, solutiondao, parametersdao, answer, senderid);
-					}else {//否定
-						newinfotag=answer.NegativeAnswer(lastRecord.get(0), allparamenter, parameter_solutionlist, questiondao, converter, process, solutiondao,parametersdao, answer, senderid);
-						Set<Integer> parameset=parametersdao.getParametersByquestionid(lastRecord.get(0).getId());
-						newinfotag.setParameter(lastRecord.get(0).getParameter());
+					Map<Integer, Parameter> lastinitalparameters=process.IsUnexpectAnswer(lastRecord.get(0), parametersdao, text, initalparameters);
+					if(lastinitalparameters.isEmpty()) {
+						if(initalparameters.isEmpty()) {//是否含有除关联参数意外的参数
+							BaiduInstance aicheck=new BaiduInstance();
+							if(aicheck.sentimentClassify(text).equals("positive")) {//肯定
+								newinfotag=answer.answerNormalQuestion(lastRecord.get(0), questiondao, converter, allparamenter, parameter_solutionlist, process, solutiondao, parametersdao, answer, senderid);
+							}else {//否定
+								newinfotag=answer.NegativeAnswer(lastRecord.get(0), allparamenter, parameter_solutionlist, questiondao, converter, process, solutiondao,parametersdao, answer, senderid);
+								//Set<Integer> parameset=parametersdao.getParametersByquestionid(lastRecord.get(0).getId());
+								newinfotag.setParameter(lastRecord.get(0).getParameter());
+							}
+						}else {
+							parametersdao.updateStatus(senderid);
+							newinfotag=newconversation(text);
+						}
+					}else {
+						newinfotag=answer.answerRelatedQuestion(lastRecord.get(0), allparamenter, parameter_solutionlist, lastinitalparameters, process, solutiondao, parametersdao, answer, senderid);
 					}
 				}else {
 					newinfotag=answerUpperquestion(lastRecord.get(0), text, parameterin);

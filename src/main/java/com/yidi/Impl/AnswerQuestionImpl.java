@@ -99,7 +99,7 @@ public class AnswerQuestionImpl implements AnswerQuestion {
 			}else {
 				int curquesid=process.getquestionidbyparameterid(thisp.getId());
 				if (answer.IsAskedQuestion(String.valueOf(curquesid), username)) {
-					
+
 				}else {
 					index++;
 					if(index==1) {
@@ -111,7 +111,7 @@ public class AnswerQuestionImpl implements AnswerQuestion {
 						if(param!=null){
 							upcheckparameterid.add(param.getParameterid());
 						}
-						
+
 					}
 				}
 			}
@@ -142,12 +142,12 @@ public class AnswerQuestionImpl implements AnswerQuestion {
 					infotag.setInfo("宠友小智！您身边的养宠专家！");
 				}
 			}
-			
+
 		}
 		infotag.setParameter(newgetedparameter);
 		return infotag;
 	}
-	
+
 	//降序
 		public static <K, V extends Comparable<? super V>> Map<K, V> sortByValueDesc(Map<K, V> map) {
 
@@ -191,5 +191,22 @@ public class AnswerQuestionImpl implements AnswerQuestion {
 				e.printStackTrace();
 			}
 			return false;
+		}
+
+		@Override
+		public ReturnInfo answerRelatedQuestion(ReturnInfo lastinfo, Map<Integer, Parameter> allparameters,
+				Map<Set<Integer>, ParameterSolution> parameter_solutionlist, Map<Integer, Parameter> newparameters,ProcessFactory process,AboutSolutionDAO solutiondao,AboutParametersDAO parameterdao,AnswerQuestion answer,String sender) {
+			if(lastinfo.getParameter().contains(",")) {
+				String[] parameterarray=lastinfo.getParameter().split(",");
+				for(String keystr:parameterarray) {
+					Integer key=Integer.valueOf(keystr);
+					newparameters.put(key, allparameters.get(key));
+				}
+			}else {
+				Integer key=Integer.valueOf(lastinfo.getParameter());
+				newparameters.put(key, allparameters.get(key));
+			}
+			ReturnInfo infotag=process.getReturnMSG(parameter_solutionlist, newparameters, allparameters, process, solutiondao, parameterdao, answer, sender);
+			return infotag;
 		}
 }

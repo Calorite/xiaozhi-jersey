@@ -365,10 +365,10 @@ public class ProcessFactoryImpl implements ProcessFactory {
 		for(PSranklist thisp:nowpsranklist){
 			if(parameteridset.contains(thisp.getId())){
 
-			}else {			
+			}else {
 				int curquesid=process.getquestionidbyparameterid(thisp.getId());
 				if (answer.IsAskedQuestion(String.valueOf(curquesid), usrname)) {
-					
+
 				}else {
 					index++;
 					if(index==1) {
@@ -380,10 +380,10 @@ public class ProcessFactoryImpl implements ProcessFactory {
 						if(param!=null){
 							upcheckparameterid.add(param.getParameterid());
 						}
-						
+
 					}
 				}
-				
+
 			}
 		}
 		for(Set<Integer> key:parametersolutionnewlist.keySet()) {
@@ -402,6 +402,7 @@ public class ProcessFactoryImpl implements ProcessFactory {
 		//MaxUpperQuestion maxtimesquestion=getMaxString(uncheckupperquestion,process.inconversationrecord(senderid));
 		ReturnInfo infotag=null;
 		infotag=new ReturnInfo(String.valueOf(questionid), 0, question);
+		infotag.setParameter(newgetedparameter);
 		infotag.setUncheckparameter(parameterdao.updateUncheckParameter(upcheckparameterid, usrname));
 		if (upcheckparameterid.isEmpty()) {//问完了
 			if (infotag.getStatus()==0) {//没有出solution
@@ -413,9 +414,8 @@ public class ProcessFactoryImpl implements ProcessFactory {
 					infotag.setInfo("宠友小智！您身边的养宠专家！");
 				}
 			}
-			
+
 		}
-		infotag.setParameter(newgetedparameter);
 		return infotag;
 	}
 
@@ -438,8 +438,22 @@ public class ProcessFactoryImpl implements ProcessFactory {
 		}else {
 			if(set1.contains(Integer.valueOf(checked))){
 				set1.remove(Integer.valueOf(checked));
-			}	
+			}
 		}
 		return set1;
+	}
+
+	@Override
+	public Map<Integer,Parameter> IsUnexpectAnswer(ReturnInfo lastrecord, AboutParametersDAO parameterdao,String text,Map<Integer, Parameter> initalparameters) {
+		// TODO Auto-generated method stub
+		Map<Integer,Parameter> parametermap=new HashMap<Integer,Parameter>();
+		if(!initalparameters.isEmpty()) {
+			for(Integer key:initalparameters.keySet()) {
+				if(lastrecord.getUncheckparameter().contains(key)) {
+					parametermap.put(key, initalparameters.get(key));
+				}
+			}
+		}
+		return parametermap;
 	}
 }
