@@ -12,6 +12,7 @@ var nownewparameter='';
 var thisnowquestion='';
 var currenttrid=0;
 var minparameterset=[];
+var parameterlist=[]
 function SelectText(){
 	try{
 		var selecter=window.getSelection().toString();

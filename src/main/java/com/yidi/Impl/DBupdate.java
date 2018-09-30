@@ -177,6 +177,36 @@ public class DBupdate {
 		return false;
 	}
 
+	public static boolean updateInparamters(String chioces,String parastr,String returnparaid,String questionid){
+		DBService helper=new DBService();
+		String sql="UPDATE ai_qanda.paramenterques_tb SET chioces=?, answer=?, returnparameter=? WHERE id="+questionid+";";
+		String[] params={chioces,parastr,returnparaid};
+		int rows=helper.executeUpdate(sql, params);
+		if(rows>0){
+			return true;
+		}
+		return false;
+	}
+	
+	
+	public static String getQuestionbyparameterid(String id){
+		DBService helper=new DBService();
+		String questionid="";
+		String sql="SELECT * FROM ai_qanda.parameter_tb where id=?;";
+		String[] params={id};
+		ResultSet rs=helper.executeQueryRS(sql, params);
+		try {
+			if (rs.next()) {
+				questionid=rs.getString(2);
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return questionid;
+	}
+	
+	
 	public static int getSolutionid(String text) throws SQLException {
 		DBService helper=new DBService();
 		String sql="INSERT INTO ai_qanda.solution_tb (solution) VALUES ('"+text+"');";

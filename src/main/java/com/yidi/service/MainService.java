@@ -344,7 +344,7 @@ public class MainService implements TextInfoBytypeFactory {
 					if(lastinitalparameters.isEmpty()) {
 						if(initalparameters.isEmpty()) {//是否含有除关联参数意外的参数
 							BaiduInstance aicheck=new BaiduInstance();
-							if(aicheck.sentimentClassify(text).equals("positive")) {//肯定
+							if(text.equals("是")||text.equals("嗯")||text.equals("对")||text.equals("有")||aicheck.sentimentClassify(text).equals("positive")) {//肯定
 								newinfotag=answer.answerNormalQuestion(lastRecord.get(0), questiondao, converter, allparamenter, parameter_solutionlist, process, solutiondao, parametersdao, answer, senderid);
 							}else {//否定
 								newinfotag=answer.NegativeAnswer(lastRecord.get(0), allparamenter, parameter_solutionlist, questiondao, converter, process, solutiondao,parametersdao, answer, senderid);

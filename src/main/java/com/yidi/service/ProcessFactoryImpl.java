@@ -263,7 +263,7 @@ public class ProcessFactoryImpl implements ProcessFactory {
 				retainmap.put(retainset, retainset.size());
 			}
 		}
-		Map<Set<Integer>,Integer> newretainmap=sortByValueDesc(retainmap);
+		Map<Set<Integer>,Integer> newretainmap=sortByValue(retainmap);
 		Map.Entry<Set<Integer>,Integer> entry = newretainmap.entrySet().iterator().next();
 		Set<Integer> newset=entry.getKey();//并集最多的参数集合
 		for(int id:newset) {
@@ -354,7 +354,7 @@ public class ProcessFactoryImpl implements ProcessFactory {
 		//	ParameterSolution firstPS=parameter_solutionlist.get(entry.getKey());
 		//	return new ReturnInfo(String.valueOf(firstPS.getSolution()), 1, solutiondao.getSolutinStr(String.valueOf(firstPS.getSolution())));
 		//}
-		parametersolutionnewlist=sortByValueDesc(parametersolutionnewlist);
+		parametersolutionnewlist=sortByValue(parametersolutionnewlist);
 		Entry<Set<Integer>, Integer> entry = parametersolutionnewlist.entrySet().iterator().next();
 		ParameterSolution firstPS=parameter_solutionlist.get(entry.getKey());
 		parametersolutionnewlist.remove(entry.getKey());

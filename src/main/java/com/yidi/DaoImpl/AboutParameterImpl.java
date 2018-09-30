@@ -65,7 +65,8 @@ public class AboutParameterImpl implements AboutParametersDAO {
 			int count=0;
 			for(String parameter:pararray) {
 				if(parameter.contains("!")){
-					if(text.contains(parameter)) {
+					String afterparameter=parameter.replace("!", "");
+					if(text.contains(afterparameter)) {
 
 					}else {
 						count++;

@@ -144,11 +144,26 @@ public class MyResource {
 
 		List<parameInQuestion> parameters=gson.fromJson(parametersjson, new TypeToken<List<parameInQuestion>>(){}.getType());
 		int count=0;
+		String inparameter="";
+		String inparameid="";
+		String questionid="";
 		for(parameInQuestion pip:parameters){
+			questionid=DBupdate.getQuestionbyparameterid(pip.getId());
+			if(inparameter.equals("")){
+				inparameid=pip.getId();
+				inparameter=pip.getParameterinquestion();
+			}else {
+				inparameter=inparameter+","+pip.getParameterinquestion();
+				inparameid=inparameid+","+pip.getId();
+			}
 			if(DBupdate.updateParameter(pip)){
 				count++;
 			}
-
+		}
+		try {
+			DBupdate.updateInparamters(String.valueOf(parameters.size()), inparameter, inparameid,questionid);
+		} catch (Exception e) {
+			// TODO: handle exception
 		}
 		if (count==parameters.size()) {
 			return "true";

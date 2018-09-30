@@ -6,7 +6,7 @@
 <html>
 <head>
 <title>数据库工具</title>
-<script src="../lib/jquery.js"></script>
+<script src="../js/jquery.js"></script>
 <link href="../css/myshow.css" rel="stylesheet" />
 <link rel="stylesheet" type="text/css" href="../css/listswap.css" />
 <link
