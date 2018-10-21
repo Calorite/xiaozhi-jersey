@@ -9,12 +9,16 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Logger;
+
 import com.yidi.interfactoty.AboutParametersDAO;
 import com.yidi.service.ConvertImpl;
 import com.yidi.entity.Parameter;
 
 
 public class AboutParameterImpl implements AboutParametersDAO {
+	private static Logger logger = Logger.getLogger(AboutParameterImpl.class);
 
 	@Override
 	public Map<Integer, Parameter> getparams() throws SQLException {
@@ -89,20 +93,248 @@ public class AboutParameterImpl implements AboutParametersDAO {
 
 	@Override
 	public String checkParameterLine(String parameline,String text) {
-		if(parameline.contains("/")) {//有多个参
-			String[] paramelist=parameline.split("/");
-			for(String parameter:paramelist) {
-				if(checkandpara(parameter,text)) {
-					return parameter;
+		if (parameline.contains("|")) {
+			String[] items=parameline.split("\\|");
+			int count=0;
+			for(String item:items){
+				if (item.contains("#")) {
+					int incount=0;
+					String[] paramearray=item.split("#");
+					for(int i=0;i+1<paramearray.length;i++){
+						if(checkAllItems(paramearray[i],paramearray[i+1],text)){
+							incount++;
+						}				
+					}
+					if (incount==paramearray.length-1) {
+						count++;
+					}
+					if(count>0){
+						return parameline;
+					}
+				}else if(item.contains("/")) {//有多个参
+					String[] paramelist=item.split("/");
+					for(String parameter:paramelist) {
+						if(checkandpara(parameter,text)) {
+							return parameline;
+						}
+					}
+				}else {//单参数
+					if (text.contains(item)) {
+						return parameline;
+					}
 				}
 			}
-		}else {
-			if(checkandpara(parameline,text)) {
+		}else if(parameline.contains("(")&&parameline.contains(")")){
+			if(parameline.contains("#")){
+				String[] paramearray=parameline.split("#");
+				for(int i=0;i+1<paramearray.length;i++){
+					if(!checkAllItems(paramearray[i],paramearray[i+1],text)){
+						return null;
+					}				
+				}
 				return parameline;
+			}
+		}else {
+			String[] items=parameline.split("/");
+			for(String item:items){
+				if (checkandpara(item,text)) {
+					return parameline;
+				}
 			}
 		}
 		return null;
 	}
+
+	public boolean checkAllItems(String para1,String para2,String text){
+		if (para1.contains("/")&&para2.contains("/")) {
+			String newpara1="";
+			String newpara2="";
+			if(para1.contains("(")&&para1.contains(")")&&para2.contains("(")&&para2.contains(")")){
+				newpara1=para1.substring(1,para1.length()-1);
+				newpara2=para2.substring(1,para2.length()-1);
+			}			
+			String[] array1=newpara1.split("/");
+			String[] array2=newpara2.split("/");
+			int count=0;
+			for (int i = 0; i < array1.length; i++) {
+				for (int j = 0; j < array2.length; j++) {
+					if (checkIsYesOrNo(array1[i], text)&&checkIsYesOrNo(array2[j], text)) {
+						count++;
+					}
+				}
+			}
+			if (count>0) {
+				return true;
+			}
+		}else if(para1.contains("/")&&para2.contains("&")){
+			String newpara1="";
+			String newpara2="";
+			if(para1.contains("(")&&para1.contains(")")&&para2.contains("(")&&para2.contains(")")){
+				newpara1=para1.substring(1,para1.length()-1);
+				newpara2=para2.substring(1,para2.length()-1);
+			}			
+			String[] array1=newpara1.split("/");
+			String[] array2=newpara2.split("&");
+			int count=0;
+			for (int i = 0; i < array1.length; i++) {
+				for (int j = 0; j < array2.length; j++) {
+					if (checkIsYesOrNo(array1[i], text)&&checkIsYesOrNo(array2[j], text)) {
+						count++;
+					}
+					if (count==array2.length) {
+						return true;
+					}
+				}
+			}
+		}else if(para1.contains("&")&&para2.contains("/")){
+			String newpara1="";
+			String newpara2="";
+			if(para1.contains("(")&&para1.contains(")")&&para2.contains("(")&&para2.contains(")")){
+				newpara1=para1.substring(1,para1.length()-1);
+				newpara2=para2.substring(1,para2.length()-1);
+			}			
+			String[] array1=newpara1.split("&");
+			String[] array2=newpara2.split("/");
+			int count=0;
+			for (int i = 0; i < array2.length; i++) {
+				for (int j = 0; j < array1.length; j++) {
+					if (checkIsYesOrNo(array2[i], text)&&checkIsYesOrNo(array1[j], text)) {
+						count++;
+					}
+					if (count==array1.length) {
+						return true;
+					}
+				}
+			}
+		}else if (para1.contains("&")&&para2.contains("&")) {
+			String newpara1="";
+			String newpara2="";
+			if(para1.contains("(")&&para1.contains(")")&&para2.contains("(")&&para2.contains(")")){
+				newpara1=para1.substring(1,para1.length()-1);
+				newpara2=para2.substring(1,para2.length()-1);
+			}			
+			String[] array1=newpara1.split("&");
+			String[] array2=newpara2.split("&");
+			int allcount=0;
+			int count=0;
+			for (int i = 0; i < array1.length; i++) {
+				for (int j = 0; j < array2.length; j++) {
+					allcount++;
+					if (checkIsYesOrNo(array1[i], text)&&checkIsYesOrNo(array2[j], text)) {
+						count++;
+					}
+				}
+			}
+			if (allcount==count) {
+				return true;
+			}
+		}else {
+			String newpara1="";
+			String newpara2="";
+			if(para1.contains("(")&&para1.contains(")")&&para2.contains("(")&&para2.contains(")")){
+				newpara1=para1.substring(1,para1.length()-1);
+				newpara2=para2.substring(1,para2.length()-1);
+			}			
+			String[] array1=newpara1.split("/");
+			String[] array2=newpara2.split("/");
+			int no1count=0;
+			int no2count=0;
+			if(newpara1.contains("&")){
+				String[] itemarray1=newpara2.split("/");
+				String[] itemarray2=newpara1.split("&");
+				for (int i = 0; i < itemarray1.length; i++) {
+					int count=0;
+					for (int j = 0; j < itemarray2.length; j++) {
+						if (checkIsYesOrNo(itemarray1[i], text)&&checkIsYesOrNo(itemarray2[j], text)) {
+							count++;
+						}
+					}
+					if (count==itemarray2.length) {
+						return true;
+					}
+				}
+			}
+			else if (!newpara1.contains("/")) {
+				for (int i = 0; i < array2.length; i++) {
+					if (checkIsYesOrNo(newpara1, text)&&checkIsYesOrNo(array2[i], text)) {
+						no1count++;
+					}
+				}
+				if (no1count>0) {
+					return true;
+				}
+			}else if (newpara2.contains("&")) {
+				String[] itemarray1=newpara1.split("/");
+				String[] itemarray2=newpara2.split("&");
+				for (int i = 0; i < itemarray1.length; i++) {
+					int count=0;
+					for (int j = 0; j < itemarray2.length; j++) {
+						if (checkIsYesOrNo(itemarray1[i], text)&&checkIsYesOrNo(itemarray2[j], text)) {
+							count++;
+						}
+					}
+					if (count==itemarray2.length) {
+						return true;
+					}
+				}
+			}else if (!newpara2.contains("/")) {
+				for (int i = 0; i < array1.length; i++) {
+					if (checkIsYesOrNo(newpara2, text)&&checkIsYesOrNo(array1[i], text)) {
+						no2count++;
+					}
+				}
+				if (no2count>0) {
+					return true;
+				}
+			}
+			int allcount=0;
+			int count=0;
+			for (int i = 0; i < array1.length; i++) {
+				for (int j = 0; j < array2.length; j++) {
+					allcount++;
+					if (checkIsYesOrNo(array1[i], text)&&checkIsYesOrNo(array2[j], text)) {
+						count++;
+					}
+				}
+			}
+			if (allcount==count) {
+				return true;
+			}
+		}
+		return false;	
+	}
+
+	public boolean checkIsYesOrNo(String parameter,String text) {
+		if (parameter.contains("&")) {
+			String[] paray=parameter.split("&");
+			int count=0;
+			for (String paraitem:paray) {
+				if (text.contains(paraitem)) {
+					count++;
+				}
+			}
+			if (count==paray.length) {
+				return true;
+			}else {
+				return false;
+			}
+		}else if (parameter.contains("!")) {
+			String newparameter=parameter.replace("!", "");
+			if (text.contains(newparameter)) {
+				return false;
+			}else {
+				return true;
+			}
+		}else {
+			if (text.contains(parameter)) {
+				return true;
+			}else {
+				return false;
+			}
+		}
+	}
+
+
 
 	public Parameter insertParametergetID(String paramenter,String first,String second) throws SQLException{
 		DBService helper=new DBService();

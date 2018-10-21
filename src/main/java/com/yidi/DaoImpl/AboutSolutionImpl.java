@@ -47,7 +47,16 @@ public class AboutSolutionImpl implements AboutSolutionDAO {
 				}
 				Integer solutionrank=rs.getInt(3);
 				Integer returnid=rs.getInt(2);
-				list1.put(set1, new ParameterSolution(psranklist, returnid,solutionrank));
+				ParameterSolution parametesolurtion=new ParameterSolution(psranklist, returnid,solutionrank);
+				try {
+					parametesolurtion.setAgeperiod(rs.getString(5));	
+				} catch (Exception e) {
+				}	
+				try {
+					parametesolurtion.setSex(rs.getString(6));
+				} catch (Exception e) {
+				}				
+				list1.put(set1, parametesolurtion);
 			} catch (Exception e) {
 				// TODO: handle exception
 				System.out.println("fail");

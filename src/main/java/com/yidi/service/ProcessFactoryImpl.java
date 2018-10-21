@@ -17,11 +17,15 @@ import java.util.Set;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
+import org.apache.log4j.Logger;
+
 import com.google.gson.Gson;
+import com.yidi.DaoImpl.AboutParameterImpl;
 import com.yidi.DaoImpl.DBService;
 import com.yidi.entity.PSranklist;
 import com.yidi.entity.Parameter;
 import com.yidi.entity.ParameterSolution;
+import com.yidi.entity.PetInfo;
 import com.yidi.entity.ReturnInfo;
 import com.yidi.interfactoty.AboutParametersDAO;
 import com.yidi.interfactoty.AboutSolutionDAO;
@@ -29,8 +33,7 @@ import com.yidi.interfactoty.AnswerQuestion;
 import com.yidi.interfactoty.ProcessFactory;
 
 public class ProcessFactoryImpl implements ProcessFactory {
-	//Map<Integer,Parameter> allparamenter=null;
-	//AboutParametersDAO parametersdao;
+	private static Logger logger = Logger.getLogger(AboutParameterImpl.class);
 	@Override
 	public List<ReturnInfo> returnpassedrecord(int rows,String usrname,DBService helper) {
 		List<ReturnInfo> list1=new LinkedList<ReturnInfo>();
@@ -218,9 +221,11 @@ public class ProcessFactoryImpl implements ProcessFactory {
 	public Map<Integer, Parameter> getInitialParameters(Map<Integer, Parameter> allparamenter, String text,
 			AboutParametersDAO parametersdao) throws SQLException {
 		Map<Integer,Parameter> targetpara=new HashMap<Integer,Parameter>();
+		logger.info("InputedInfo:"+text);
 		for(Parameter curtparamente:allparamenter.values()) {
 			String targetparame=parametersdao.checkParameterLine(curtparamente.getParameter(),text);
 			if(targetparame!=null) {
+				logger.info("getedParameter:"+targetparame);
 				curtparamente.setTargetparameitem(targetparame);
 				targetpara.put(curtparamente.getParameterid(),curtparamente);
 			}
@@ -349,15 +354,72 @@ public class ProcessFactoryImpl implements ProcessFactory {
 				parametersolutionnewlist.put(key, thisPS.getSolutionrank());
 			}
 		}
-		//if(parametersolutionnewlist.size()==1) {//目标parametersolution只有一个了return一个solution
-		//	Entry<Set<Integer>, Integer> entry = parametersolutionnewlist.entrySet().iterator().next();
-		//	ParameterSolution firstPS=parameter_solutionlist.get(entry.getKey());
-		//	return new ReturnInfo(String.valueOf(firstPS.getSolution()), 1, solutiondao.getSolutinStr(String.valueOf(firstPS.getSolution())));
-		//}
+
 		parametersolutionnewlist=sortByValue(parametersolutionnewlist);
 		Entry<Set<Integer>, Integer> entry = parametersolutionnewlist.entrySet().iterator().next();
 		ParameterSolution firstPS=parameter_solutionlist.get(entry.getKey());
 		parametersolutionnewlist.remove(entry.getKey());
+		SpecialProcess specialProcess=new SpecialProcess();
+		List<PetInfo> petinfolist=specialProcess.getuserpetType(usrname);
+		int specialtag=0;
+		if (firstPS.getAgeperiod()!=null) {//需要年龄判断			
+			 if (petinfolist.size()==1) {
+				 if (petinfolist.get(0).getBirthday()!=null) {
+					 if (specialProcess.ageProcess(firstPS, petinfolist.get(0))) {
+							
+						}else {//不符合年龄段
+							specialtag=1;
+							Entry<Set<Integer>, Integer> newentry = parametersolutionnewlist.entrySet().iterator().next();
+							firstPS=parameter_solutionlist.get(newentry.getKey());
+						}
+				}else{//请告诉我宠物的年龄段
+					DBService helper=new DBService();
+					List<ReturnInfo> lastRecord=returnpassedrecord(1, usrname,helper);
+					if (lastRecord.isEmpty()) {
+						ReturnInfo infotag=getInfoByPS(firstPS, parametersolutionnewlist, upcheckparameterid, allparamenter, process, parameterdao, upcheckparameterid, answer, usrname, newgetedparameter);		
+						infotag.setInfo("请告诉我"+petinfolist.get(0).getName()+"的出生年月日");
+						infotag.setSpecial(2);//2插入年龄
+						return infotag;
+					}else {
+						ReturnInfo infotag=lastRecord.get(0);
+						infotag.setInfo("请告诉我"+petinfolist.get(0).getName()+"的出生年月日");
+						return infotag;
+					}	
+				}
+			}else {//请告诉是那只宠物
+				
+			}
+			
+		}else if (firstPS.getSex()!=null) {//需要性别判断
+			if (petinfolist.get(0).getSex()!=0) {
+				 if (specialProcess.sexProcess(firstPS, petinfolist.get(0))) {
+						
+					}else {//不符合性别
+						if (specialtag==0) {
+							Entry<Set<Integer>, Integer> newentry = parametersolutionnewlist.entrySet().iterator().next();
+							firstPS=parameter_solutionlist.get(newentry.getKey());
+						}					
+					}
+			}else{//请告诉我宠物的性别
+				DBService helper=new DBService();
+				List<ReturnInfo> lastRecord=returnpassedrecord(1, usrname,helper);
+				if (lastRecord.isEmpty()) {
+					ReturnInfo infotag=getInfoByPS(firstPS, parametersolutionnewlist, upcheckparameterid, allparamenter, process, parameterdao, upcheckparameterid, answer, usrname, newgetedparameter);		
+					infotag.setInfo("请告诉我"+petinfolist.get(0).getName()+"的性别");
+					infotag.setSpecial(3);//3插入性别
+					return infotag;
+				}else {
+					ReturnInfo infotag=lastRecord.get(0);
+					infotag.setInfo("请告诉我"+petinfolist.get(0).getName()+"的性别");
+					return infotag;
+				}				
+			}
+		}
+		ReturnInfo infotag=getInfoByPS(firstPS, parametersolutionnewlist, upcheckparameterid, allparamenter, process, parameterdao, upcheckparameterid, answer, usrname, newgetedparameter);		
+		return infotag;
+	}
+
+	public ReturnInfo getInfoByPS(ParameterSolution firstPS,Map<Set<Integer>, Integer> parametersolutionnewlist,Set<Integer> upcheckparameterid,Map<Integer,Parameter> allparamenter,ProcessFactory process,AboutParametersDAO parameterdao,Set<Integer> parameteridset,AnswerQuestion answer,String usrname,String newgetedparameter) {
 		List<PSranklist> nowpsranklist=sortByrank(firstPS.getParameterset());
 		int index=0;
 		int questionid=0;
@@ -382,6 +444,7 @@ public class ProcessFactoryImpl implements ProcessFactory {
 						}
 
 					}
+					
 				}
 
 			}
@@ -418,7 +481,7 @@ public class ProcessFactoryImpl implements ProcessFactory {
 		}
 		return infotag;
 	}
-
+	
 
 	public static List<PSranklist> sortByrank(List<PSranklist> list1) {
 		List<PSranklist> newlist=new LinkedList<PSranklist>();

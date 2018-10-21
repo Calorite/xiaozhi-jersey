@@ -83,7 +83,23 @@ public class MainService implements TextInfoBytypeFactory {
 							process.insertReturnInfo(answeredinfo);
 						}
 					}else if (lastRecord.get(0).getStatus()==0) {//话题中...
-						    //正常回答
+						if(!lastRecord.isEmpty()&&lastRecord.get(0).getSpecial()==2){//回答的是出生年月日
+							specialcess.insertBirthday(text, senderid);
+							ReturnInfo answeredinfo=answerName(lastRecord.get(0));
+							answeredinfo.setRecieved(text);
+							answeredinfo.setUsername(senderid);
+							this.reply=answeredinfo.getInfo();
+							process.insertReturnInfo(answeredinfo);
+						}else if(!lastRecord.isEmpty()&&lastRecord.get(0).getSpecial()==3){//回答的是性别
+							specialcess.insertSex(text, senderid);
+							ReturnInfo answeredinfo=answerName(lastRecord.get(0));
+							answeredinfo.setRecieved(text);
+							answeredinfo.setUsername(senderid);
+							this.reply=answeredinfo.getInfo();
+							process.insertReturnInfo(answeredinfo);
+						}
+						else{
+							//正常回答
 							ReturnInfo answeredinfo=answerTypesQuestion(lastRecord);
 							answeredinfo.setRecieved(text);
 							answeredinfo.setUsername(senderid);
@@ -92,6 +108,7 @@ public class MainService implements TextInfoBytypeFactory {
 							if (answeredinfo.getStatus()==1) {
 								parametersdao.updateStatus(senderid);
 							}
+						}
 					}else{//新话题...
 						if(initalparameters.size()==0){//没有参数
 							//API
@@ -110,6 +127,12 @@ public class MainService implements TextInfoBytypeFactory {
 			ReturnInfo answeredinfo=answerName(lastRecord.get(0));
 			answeredinfo.setRecieved(text);
 			process.insertReturnInfo(answeredinfo);
+			this.reply=answeredinfo.getInfo();
+		}else if(!lastRecord.isEmpty()&&lastRecord.get(0).getSpecial()==2){//回答的是出生年月日
+			specialcess.insertBirthday(text, senderid);
+			ReturnInfo answeredinfo=answerName(lastRecord.get(0));
+			answeredinfo.setRecieved(text);
+			answeredinfo.setUsername(senderid);
 			this.reply=answeredinfo.getInfo();
 		}else {//请告诉我您家宠物的信息
 			ReturnInfo repeatreturn=newconversation(text);
@@ -333,39 +356,39 @@ public class MainService implements TextInfoBytypeFactory {
 
 
 	public ReturnInfo answerTypesQuestion(List<ReturnInfo> lastRecord) throws SQLException{
-			ReturnInfo newinfotag=null;
-			Map<Integer, Parameter> targetparameters1=questiondao.gettargetparamete(lastRecord.get(0).getId());
-			Map<Integer, Parameter> parameterin1=process.getInitialParameters(targetparameters1, text, parametersdao);
-			if(parameterin1.isEmpty()) {//回答的内容没有包含三级参数（全局参数）
-				Map<Integer, Parameter> targetparameters=parametersdao.targetparametersbyquestion(lastRecord.get(0).getId());
-				Map<Integer, Parameter> parameterin=process.getInitialParameters(targetparameters, text, parametersdao);
-				if(parameterin.isEmpty()) {//回答的内容不是问题内参数，positive和negative判断
-					Map<Integer, Parameter> lastinitalparameters=process.IsUnexpectAnswer(lastRecord.get(0), parametersdao, text, initalparameters);
-					if(lastinitalparameters.isEmpty()) {
-						if(initalparameters.isEmpty()) {//是否含有除关联参数意外的参数
-							BaiduInstance aicheck=new BaiduInstance();
-							if(text.equals("是")||text.equals("嗯")||text.equals("对")||text.equals("有")||aicheck.sentimentClassify(text).equals("positive")) {//肯定
-								newinfotag=answer.answerNormalQuestion(lastRecord.get(0), questiondao, converter, allparamenter, parameter_solutionlist, process, solutiondao, parametersdao, answer, senderid);
-							}else {//否定
-								newinfotag=answer.NegativeAnswer(lastRecord.get(0), allparamenter, parameter_solutionlist, questiondao, converter, process, solutiondao,parametersdao, answer, senderid);
-								//Set<Integer> parameset=parametersdao.getParametersByquestionid(lastRecord.get(0).getId());
-								newinfotag.setParameter(lastRecord.get(0).getParameter());
-							}
-						}else {
-							parametersdao.updateStatus(senderid);
-							newinfotag=newconversation(text);
+		ReturnInfo newinfotag=null;
+		Map<Integer, Parameter> targetparameters1=questiondao.gettargetparamete(lastRecord.get(0).getId());
+		Map<Integer, Parameter> parameterin1=process.getInitialParameters(targetparameters1, text, parametersdao);
+		if(parameterin1.isEmpty()) {//回答的内容没有包含三级参数（全局参数）
+			Map<Integer, Parameter> targetparameters=parametersdao.targetparametersbyquestion(lastRecord.get(0).getId());
+			Map<Integer, Parameter> parameterin=process.getInitialParameters(targetparameters, text, parametersdao);
+			if(parameterin.isEmpty()) {//回答的内容不是问题内参数，positive和negative判断
+				Map<Integer, Parameter> lastinitalparameters=process.IsUnexpectAnswer(lastRecord.get(0), parametersdao, text, initalparameters);
+				if(lastinitalparameters.isEmpty()) {
+					if(initalparameters.isEmpty()) {//是否含有除关联参数意外的参数
+						BaiduInstance aicheck=new BaiduInstance();
+						if(text.equals("是")||text.equals("嗯")||text.equals("对")||text.equals("有")||aicheck.sentimentClassify(text).equals("positive")) {//肯定
+							newinfotag=answer.answerNormalQuestion(lastRecord.get(0), questiondao, converter, allparamenter, parameter_solutionlist, process, solutiondao, parametersdao, answer, senderid);
+						}else {//否定
+							newinfotag=answer.NegativeAnswer(lastRecord.get(0), allparamenter, parameter_solutionlist, questiondao, converter, process, solutiondao,parametersdao, answer, senderid);
+							//Set<Integer> parameset=parametersdao.getParametersByquestionid(lastRecord.get(0).getId());
+							newinfotag.setParameter(lastRecord.get(0).getParameter());
 						}
 					}else {
-						newinfotag=answer.answerRelatedQuestion(lastRecord.get(0), allparamenter, parameter_solutionlist, lastinitalparameters, process, solutiondao, parametersdao, answer, senderid);
+						parametersdao.updateStatus(senderid);
+						newinfotag=newconversation(text);
 					}
 				}else {
-					newinfotag=answerUpperquestion(lastRecord.get(0), text, parameterin);
+					newinfotag=answer.answerRelatedQuestion(lastRecord.get(0), allparamenter, parameter_solutionlist, lastinitalparameters, process, solutiondao, parametersdao, answer, senderid);
 				}
-
 			}else {
-				newinfotag=answerUpperquestion(lastRecord.get(0), text, parameterin1);
+				newinfotag=answerUpperquestion(lastRecord.get(0), text, parameterin);
 			}
-			return newinfotag;
+
+		}else {
+			newinfotag=answerUpperquestion(lastRecord.get(0), text, parameterin1);
+		}
+		return newinfotag;
 	}
 
 	public ReturnInfo answerName(ReturnInfo lastRecord) throws SQLException {
