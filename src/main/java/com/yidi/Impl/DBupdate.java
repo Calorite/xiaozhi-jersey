@@ -166,15 +166,39 @@ public class DBupdate {
 		return 0;
 	}
 
-	public static boolean InsertSolution(String parameters,String solutionid,String solutionrank,String rankset) {
+	public static boolean InsertSolution(String parameters,String solutionid,String solutionrank,String rankset,String sex,String age1,String age2) {
 		DBService helper=new DBService();
-		String sql="INSERT INTO ai_qanda.paramenter_solution (parameterid,solutionid,solutionrank,prametersranklist) VALUES (?,?,?,?);";
+		String age="";
+		String sql="INSERT INTO ai_qanda.parameter_solution (parameterid,solutionid,solutionrank,prametersranklist) VALUES (?,?,?,?);";
 		String[] paras={parameters,solutionid,solutionrank,rankset};
-		int rows=helper.executeUpdate(sql, paras);
-		if(rows==1){
-			return true;
+		if (age1.equals("")||age2.equals("")) {
+			
+		}else {
+			sql="INSERT INTO ai_qanda.parameter_solution (parameterid,solutionid,solutionrank,prametersranklist,age,sex) VALUES (?,?,?,?,?,?);";
+			age=age1+"~"+age2;
+			String[] paras2={parameters,solutionid,solutionrank,rankset,age,sex};
+			int rows=helper.executeUpdate(sql, paras2);
+			if(rows==1){
+				return true;
+			}
+			return false;
 		}
-		return false;
+		if (sex.equals("")) {
+			int rows=helper.executeUpdate(sql, paras);
+			if(rows==1){
+				return true;
+			}
+			return false;
+		}else {
+			sql="INSERT INTO ai_qanda.parameter_solution (parameterid,solutionid,solutionrank,prametersranklist,sex) VALUES (?,?,?,?,?);";
+			String[] paras1={parameters,solutionid,solutionrank,rankset,sex};
+			int rows=helper.executeUpdate(sql, paras1);
+			if(rows==1){
+				return true;
+			}
+			return false;
+		}
+		
 	}
 
 	public static boolean updateInparamters(String chioces,String parastr,String returnparaid,String questionid){

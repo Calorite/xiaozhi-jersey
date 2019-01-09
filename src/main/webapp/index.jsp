@@ -55,6 +55,21 @@
 				</c:forEach>
 			</select>
 		</div>
+		<div class="endleft"></div>
+		<div class="row-fluid leftitem">
+			<span class="help-inline">性别：</span> <select id="sexselect"
+				class="selectpicker" data-show-subtext="true"
+				data-live-search="true">
+				<option value="0">无</option>
+				<option value="1">公</option>
+				<option value="2">母</option>
+				<option value="3">绝育公</option>
+				<option value="4">绝育母</option>
+			</select>
+		</div>
+		<div class="row-fluid leftitem">
+			<input type='text' id='age1'><span> 年纪(天) </span><input type='text' id='age2'>
+		</div>
 		<div class="endleft form-group" id="parameterlist">
 			<table id="tbe" class="table"
 				style="border-collapse: separate; border-spacing: 0px 7px;">

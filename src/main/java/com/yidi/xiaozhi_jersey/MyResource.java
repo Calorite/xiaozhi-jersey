@@ -207,10 +207,12 @@ public class MyResource {
 	@POST
 	@Consumes(MediaType.APPLICATION_FORM_URLENCODED)  //接受的参数类型为表单信息
 	@Produces({MediaType.APPLICATION_JSON})
-	public String parametersolution(@FormParam("parameters") String parameters,@FormParam("solutionid") String solutionid,@FormParam("solutionrank") String solutionrank,@FormParam("minset") String minparaset) throws SQLException {
+	public String parametersolution(@FormParam("parameters") String parameters,@FormParam("solutionid") String solutionid,@FormParam("solutionrank") String solutionrank,@FormParam("minset") String minparaset,@FormParam("sexvalue") String sex,@FormParam("agemin") String age1,@FormParam("agemax") String age2) throws SQLException {
 		try {
-			System.out.println(parameters);
-			System.out.println(solutionrank);
+			int insolutionrank=0;
+			if (!solutionrank.equals("")) {
+				insolutionrank=Integer.valueOf(solutionrank);
+			}
 			Gson gs=new Gson();
 			String parametersetstr="";
 			String ranksetstr="";
@@ -238,7 +240,7 @@ public class MyResource {
 							}
 						}
 					}
-					DBupdate.InsertSolution(minparametersetstr,soluid,solutionrank,minranksetstr);
+					DBupdate.InsertSolution(minparametersetstr,soluid,String.valueOf(insolutionrank),minranksetstr, sex, age1, age2);
 				}
 			}
 			for(int i=0;i<jsonObjectlist.size();i++){
@@ -251,7 +253,7 @@ public class MyResource {
 					ranksetstr=ranksetstr+","+pdto.getRank();
 				}
 			}
-			DBupdate.InsertSolution(parametersetstr,soluid,solutionrank,ranksetstr);
+			DBupdate.InsertSolution(parametersetstr,soluid,String.valueOf(insolutionrank),ranksetstr, sex, age1, age2);
 			return "1";
 		} catch (Exception e) {
 			// TODO: handle exception

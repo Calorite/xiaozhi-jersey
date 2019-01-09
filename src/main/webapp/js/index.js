@@ -47,7 +47,7 @@ $("#tijiao").on("click",function(){
 			var obj = eval(data);
 			for(j = 0; j < obj.length; j++){
 				item=obj[j];
-				$("#tbe").append("<tr id='tr"+buttoncount+"'><td><div class='btn-toolbar'><div class='btn-group'><button  class='btn btn-danger' onclick='deletefuc(event);'>删除</button></div><div class='btn-group'><button name='inDB' id='"+item.id+"' questionid='"+item.questionid+"' class='btn btn-default' onclick='showquestion(event);'>"+item.parameter+"</button></div><div class='btn-group'><label for='inputtext'>优先级：</label><input type='text' id='inputtext'></div><div class='btn-group'><label for='checkboxid'>最小参数集：</label><input name='check' type='checkbox' onclick='checkfuc(event);' /></div></div></div></td></tr>");
+				$("#tbe").append("<tr id='tr"+buttoncount+"'><td><div class='btn-toolbar'><div class='btn-group'><button  class='btn btn-danger' onclick='deletefuc(event);'>删除</button></div><div class='btn-group'><button name='inDB' id='"+item.parameterid+"' questionid='"+item.questionid+"' class='btn btn-default' onclick='showquestion(event);'>"+item.parameter+"</button></div><div class='btn-group'><label for='inputtext'>优先级：</label><input type='text' id='inputtext'></div><div class='btn-group'><label for='checkboxid'>最小参数集：</label><input name='check' type='checkbox' onclick='checkfuc(event);' /></div></div></div></td></tr>");
 				buttoncount=buttoncount+1;
 			}
 		}});
@@ -241,6 +241,9 @@ $("#tianjia").on("click",function(){
 	var parameterStr="";
 	tb = document.getElementById('tbe');
 	var rows = tb.rows;
+	var age1=$("#age1").val();
+	var age2=$("#age2").val();
+	var sex=$("#sexselect").val();
 	for (var i=0;i<rows.length;i++) {
 		tdArrid = rows[i].childNodes[0].childNodes[0].childNodes[1].childNodes[0].id;
 		var thisrank=rows[i].childNodes[0].childNodes[0].childNodes[2].childNodes[1].value;
@@ -257,7 +260,10 @@ $("#tianjia").on("click",function(){
 		data:{parameters:JSON.stringify(newparameterlist),
 			solutionid:solutiontext,
 			solutionrank:solutionparameterank,
-			minset:JSON.stringify(minparameterset)
+			minset:JSON.stringify(minparameterset),
+			sexvalue:sex,
+			agemin:age1,
+			agemax:age2
 		},
 		success : function (data) {
 			newparameterlist=[];
