@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.jar.Attributes.Name;
 
 import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
@@ -15,6 +16,7 @@ import org.apache.log4j.Logger;
 import com.yidi.interfactoty.AboutParametersDAO;
 import com.yidi.service.ConvertImpl;
 import com.yidi.entity.Parameter;
+import com.yidi.entity.ParameterSolution;
 
 
 public class AboutParameterImpl implements AboutParametersDAO {
@@ -481,6 +483,18 @@ public class AboutParameterImpl implements AboutParametersDAO {
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+		return set1;
+	}
+
+	@Override
+	public Set<Integer> getrelatedparameters(Map<Set<Integer>, ParameterSolution> parameter_solutionlist,Set<Integer> parameters,Map<Integer,Parameter> allparamenter) {
+		Set<Integer> set1=new HashSet<Integer>();
+		for(Set<Integer> parameteridset:parameter_solutionlist.keySet()){
+			if (parameteridset.containsAll(parameters)) {
+				parameteridset.removeAll(parameters);
+				set1.addAll(parameteridset);
+			}
 		}
 		return set1;
 	}

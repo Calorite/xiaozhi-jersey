@@ -20,4 +20,5 @@ public interface AboutQuestionDAO {
 	int getQuestionid(Set<Integer> set1,Map<Integer,Parameter> allparamenter) throws SQLException;
 	boolean updateQuestionparametr(String questionid, String parameterid, String parameter);
 	Map<Integer,Parameter> gettargetparamete(String questionid);
+	List<Integer> gettargetparametelist(String questionid);
 }

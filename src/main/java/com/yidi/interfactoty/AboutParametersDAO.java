@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.yidi.entity.Parameter;
+import com.yidi.entity.ParameterSolution;
 
 
 public interface AboutParametersDAO {
@@ -28,4 +29,6 @@ public interface AboutParametersDAO {
 	void updateStatus(String username);
 	
 	Set<Integer> updateUncheckParameter(Set<Integer> set1,String usrname);
+	
+	Set<Integer> getrelatedparameters(Map<Set<Integer>, ParameterSolution> parameter_solutionlist,Set<Integer> parameters,Map<Integer,Parameter> allparamenter);
 }

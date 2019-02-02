@@ -17,6 +17,8 @@ import java.util.Set;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
+import javax.enterprise.inject.New;
+
 import org.apache.log4j.Logger;
 
 import com.google.gson.Gson;
@@ -27,6 +29,7 @@ import com.yidi.entity.Parameter;
 import com.yidi.entity.ParameterSolution;
 import com.yidi.entity.PetInfo;
 import com.yidi.entity.ReturnInfo;
+import com.yidi.entity.UncheckedParameter;
 import com.yidi.interfactoty.AboutParametersDAO;
 import com.yidi.interfactoty.AboutSolutionDAO;
 import com.yidi.interfactoty.AnswerQuestion;
@@ -268,17 +271,22 @@ public class ProcessFactoryImpl implements ProcessFactory {
 				retainmap.put(retainset, retainset.size());
 			}
 		}
-		Map<Set<Integer>,Integer> newretainmap=sortByValue(retainmap);
-		Map.Entry<Set<Integer>,Integer> entry = newretainmap.entrySet().iterator().next();
-		Set<Integer> newset=entry.getKey();//并集最多的参数集合
-		for(int id:newset) {
-			for(Parameter thisp:initalset){
-				if(id==thisp.getParameterid()) {
-					validparameterset.put(thisp.getParameterid(),thisp);
+		if (!retainmap.isEmpty()) {
+			Map<Set<Integer>,Integer> newretainmap=sortByValue(retainmap);
+			Map.Entry<Set<Integer>,Integer> entry = newretainmap.entrySet().iterator().next();
+			Set<Integer> newset=entry.getKey();//并集最多的参数集合
+			for(int id:newset) {
+				for(Parameter thisp:initalset){
+					if(id==thisp.getParameterid()) {
+						validparameterset.put(thisp.getParameterid(),thisp);
+					}
 				}
 			}
+			return validparameterset;
+		}else {
+			return new HashMap<Integer, Parameter>();
 		}
-		return validparameterset;
+		
 	}
 
 	@Override
@@ -329,6 +337,7 @@ public class ProcessFactoryImpl implements ProcessFactory {
 	@Override
 	public  ReturnInfo getReturnMSG(Map<Set<Integer>, ParameterSolution> parameter_solutionlist,Map<Integer, Parameter> parameters,Map<Integer,Parameter> allparamenter,ProcessFactory process,AboutSolutionDAO solutiondao,AboutParametersDAO parameterdao,AnswerQuestion answer,String usrname) {
 		Set<Integer> parameteridset= new HashSet<Integer>();
+		ConvertImpl converter=new ConvertImpl();
 		String newgetedparameter="";
 		for (int id:parameters.keySet()) {
 			parameteridset.add(id);
@@ -342,11 +351,14 @@ public class ProcessFactoryImpl implements ProcessFactory {
 			if(key.equals(parameteridset)) {
 				ParameterSolution pSolution=parameter_solutionlist.get(key);
 				int solutionid=pSolution.getSolution();
-				return new ReturnInfo(String.valueOf(solutionid), 1, solutiondao.getSolutinStr(String.valueOf(solutionid)));
+				ReturnInfo info=new ReturnInfo(String.valueOf(solutionid), 1, solutiondao.getSolutinStr(String.valueOf(solutionid)));
+				info.setParameter(converter.intSet2String(parameteridset));
+				info.setUncheckparameter(parameteridset);
+				return info;
 			}
 		}
 		//List<String> uncheckupperquestion=new LinkedList<String>();
-		Set<Integer> upcheckparameterid=new HashSet<Integer>();
+		Map<Parameter,Integer> upcheckparameterid=new HashMap<Parameter,Integer>();//参数,参数出现次数
 		Map<Set<Integer>, Integer> parametersolutionnewlist=new HashMap<Set<Integer>, Integer>();
 		for(Set<Integer> key: parameter_solutionlist.keySet()){
 			ParameterSolution thisPS=parameter_solutionlist.get(key);
@@ -354,131 +366,201 @@ public class ProcessFactoryImpl implements ProcessFactory {
 				parametersolutionnewlist.put(key, thisPS.getSolutionrank());
 			}
 		}
-
-		parametersolutionnewlist=sortByValue(parametersolutionnewlist);
-		Entry<Set<Integer>, Integer> entry = parametersolutionnewlist.entrySet().iterator().next();
-		ParameterSolution firstPS=parameter_solutionlist.get(entry.getKey());
-		parametersolutionnewlist.remove(entry.getKey());
+		//从parametersolutionnewlist中取参数list去掉parameteridset中的参数
+		if(parametersolutionnewlist.isEmpty()){
+			//当前已捕获参数无对应参数集，计算有效参数
+			Map<Integer, Parameter> validaparmetermap=process.getValidparameters(parameter_solutionlist, converter.Map2paramterSet(parameters));
+			Set<Integer> validparameteridset= new HashSet<Integer>();
+			for (int id:validaparmetermap.keySet()) {
+				validparameteridset.add(id);
+			}
+			for(Set<Integer> key: parameter_solutionlist.keySet()){
+				ParameterSolution thisPS=parameter_solutionlist.get(key);
+				if(key.containsAll(validparameteridset)){
+					parametersolutionnewlist.put(key, thisPS.getSolutionrank());
+				}
+			}
+			parameteridset=validparameteridset;
+		}
+//		if (parameteridset.isEmpty()) {
+//			return new ReturnInfo("0", 2, "new conversation");
+//		}
 		SpecialProcess specialProcess=new SpecialProcess();
 		List<PetInfo> petinfolist=specialProcess.getuserpetType(usrname);
-		int specialtag=0;
-		if (firstPS.getAgeperiod()!=null) {//需要年龄判断			
-			 if (petinfolist.size()==1) {
-				 if (petinfolist.get(0).getBirthday()!=null) {
-					 if (specialProcess.ageProcess(firstPS, petinfolist.get(0))) {
-							
-						}else {//不符合年龄段
-							specialtag=1;
-							Entry<Set<Integer>, Integer> newentry = parametersolutionnewlist.entrySet().iterator().next();
-							firstPS=parameter_solutionlist.get(newentry.getKey());
+		for (Set<Integer> parametersolutionset:parametersolutionnewlist.keySet()) {
+			if (parametersolutionset.containsAll(parameteridset)) {
+				ParameterSolution thisPS=parameter_solutionlist.get(parametersolutionset);			
+				int specialtag=0;
+				if (thisPS.getAgeperiod()!=null) {//需要年龄判断			
+					 if (petinfolist.size()==1) {
+						 if (petinfolist.get(0).getBirthday()!=null) {
+							 if (specialProcess.ageProcess(thisPS, petinfolist.get(0))) {
+									
+								}else {//不符合年龄段
+									specialtag=1;
+									Entry<Set<Integer>, Integer> newentry = parametersolutionnewlist.entrySet().iterator().next();
+									thisPS=parameter_solutionlist.get(newentry.getKey());
+								}
+						}else{//请告诉我宠物的年龄段
+							DBService helper=new DBService();
+							List<ReturnInfo> lastRecord=returnpassedrecord(1, usrname,helper);
+							if (lastRecord.isEmpty()) {
+								ReturnInfo infotag=getInfoByPS(parameter_solutionlist, thisPS, upcheckparameterid, converter.MapParameter2intset(upcheckparameterid), allparamenter, process, parameterdao, converter.MapParameter2intset(upcheckparameterid), answer, usrname, newgetedparameter);		
+								infotag.setInfo("请告诉我"+petinfolist.get(0).getName()+"的出生年月日");
+								infotag.setSpecial(2);//2插入年龄
+								return infotag;
+							}else {
+								ReturnInfo infotag=lastRecord.get(0);
+								infotag.setInfo("请告诉我"+petinfolist.get(0).getName()+"的出生年月日");
+								return infotag;
+							}	
 						}
-				}else{//请告诉我宠物的年龄段
-					DBService helper=new DBService();
-					List<ReturnInfo> lastRecord=returnpassedrecord(1, usrname,helper);
-					if (lastRecord.isEmpty()) {
-						ReturnInfo infotag=getInfoByPS(firstPS, parametersolutionnewlist, upcheckparameterid, allparamenter, process, parameterdao, upcheckparameterid, answer, usrname, newgetedparameter);		
-						infotag.setInfo("请告诉我"+petinfolist.get(0).getName()+"的出生年月日");
-						infotag.setSpecial(2);//2插入年龄
-						return infotag;
-					}else {
-						ReturnInfo infotag=lastRecord.get(0);
-						infotag.setInfo("请告诉我"+petinfolist.get(0).getName()+"的出生年月日");
-						return infotag;
-					}	
-				}
-			}else {//请告诉是那只宠物
-				
-			}
-			
-		}else if (firstPS.getSex()!=null) {//需要性别判断
-			if (petinfolist.get(0).getSex()!=0) {
-				 if (specialProcess.sexProcess(firstPS, petinfolist.get(0))) {
+					}else {//请告诉是那只宠物
 						
-					}else {//不符合性别
-						if (specialtag==0) {
-							Entry<Set<Integer>, Integer> newentry = parametersolutionnewlist.entrySet().iterator().next();
-							firstPS=parameter_solutionlist.get(newentry.getKey());
-						}					
-					}
-			}else{//请告诉我宠物的性别
-				DBService helper=new DBService();
-				List<ReturnInfo> lastRecord=returnpassedrecord(1, usrname,helper);
-				if (lastRecord.isEmpty()) {
-					ReturnInfo infotag=getInfoByPS(firstPS, parametersolutionnewlist, upcheckparameterid, allparamenter, process, parameterdao, upcheckparameterid, answer, usrname, newgetedparameter);		
-					infotag.setInfo("请告诉我"+petinfolist.get(0).getName()+"的性别");
-					infotag.setSpecial(3);//3插入性别
-					return infotag;
-				}else {
-					ReturnInfo infotag=lastRecord.get(0);
-					infotag.setInfo("请告诉我"+petinfolist.get(0).getName()+"的性别");
-					return infotag;
-				}				
-			}
-		}
-		ReturnInfo infotag=getInfoByPS(firstPS, parametersolutionnewlist, upcheckparameterid, allparamenter, process, parameterdao, upcheckparameterid, answer, usrname, newgetedparameter);		
-		return infotag;
-	}
-
-	public ReturnInfo getInfoByPS(ParameterSolution firstPS,Map<Set<Integer>, Integer> parametersolutionnewlist,Set<Integer> upcheckparameterid,Map<Integer,Parameter> allparamenter,ProcessFactory process,AboutParametersDAO parameterdao,Set<Integer> parameteridset,AnswerQuestion answer,String usrname,String newgetedparameter) {
-		List<PSranklist> nowpsranklist=sortByrank(firstPS.getParameterset());
-		int index=0;
-		int questionid=0;
-		String question="";
-		for(PSranklist thisp:nowpsranklist){
-			if(parameteridset.contains(thisp.getId())){
-
-			}else {
-				int curquesid=process.getquestionidbyparameterid(thisp.getId());
-				if (answer.IsAskedQuestion(String.valueOf(curquesid), usrname)) {
-
-				}else {
-					index++;
-					if(index==1) {
-						questionid=process.getquestionidbyparameterid(thisp.getId());
-						question=process.getquestionbyid(String.valueOf(questionid));
-					}else {
-						//uncheckupperquestion.add(allparamenter.get(thisp.getId()).getUpperquestion());
-						Parameter param=allparamenter.get(thisp.getId());
-						if(param!=null){
-							upcheckparameterid.add(param.getParameterid());
-						}
-
 					}
 					
+				}else if (thisPS.getSex()!=null) {//需要性别判断
+					if (petinfolist.get(0).getSex()!=0) {
+						 if (specialProcess.sexProcess(thisPS, petinfolist.get(0))) {
+								
+							}else {//不符合性别
+								if (specialtag==0) {
+									Entry<Set<Integer>, Integer> newentry = parametersolutionnewlist.entrySet().iterator().next();
+									thisPS=parameter_solutionlist.get(newentry.getKey());
+								}					
+							}
+					}else{//请告诉我宠物的性别
+						DBService helper=new DBService();
+						List<ReturnInfo> lastRecord=returnpassedrecord(1, usrname,helper);
+						if (lastRecord.isEmpty()) {
+							ReturnInfo infotag=getInfoByPS(parameter_solutionlist, thisPS, upcheckparameterid, converter.MapParameter2intset(upcheckparameterid), allparamenter, process, parameterdao, converter.MapParameter2intset(upcheckparameterid), answer, usrname, newgetedparameter);		
+							infotag.setInfo("请告诉我"+petinfolist.get(0).getName()+"的性别");
+							infotag.setSpecial(3);//3插入性别
+							return infotag;
+						}else {
+							ReturnInfo infotag=lastRecord.get(0);
+							infotag.setInfo("请告诉我"+petinfolist.get(0).getName()+"的性别");
+							return infotag;
+						}				
+					}
 				}
-
+				else {//无年龄,性别等特殊处理
+					parametersolutionset.removeAll(parameteridset);//删除已经问出的参数
+					for (Integer parameterid : parametersolutionset) {
+						if (IsInSetOrNot(upcheckparameterid,parameterid)) {
+							Parameter parameter=allparamenter.get(parameterid);
+							if (parameter!=null) {
+								upcheckparameterid.put(parameter,1);
+							}							
+						}else {
+							Parameter unchecked=getUnchecked(upcheckparameterid,parameterid);
+							if (unchecked!=null) {
+								int count=upcheckparameterid.get(unchecked);
+								upcheckparameterid.put(unchecked, count+1);
+							}							
+						}
+					}
+//					ReturnInfo infotag=getInfoByPS(thisPS, parametersolutionnewlist, converter.MapParameter2intset(upcheckparameterid), allparamenter, process, parameterdao, converter.MapParameter2intset(upcheckparameterid), answer, usrname, newgetedparameter);		
+//					return infotag;
+				}			
 			}
 		}
-		for(Set<Integer> key:parametersolutionnewlist.keySet()) {
-			for (Integer id:key) {
-				if (parameteridset.contains(id)) {
+		upcheckparameterid=sortByValueDesc(upcheckparameterid);
+		Entry<Parameter, Integer> entry = upcheckparameterid.entrySet().iterator().next();
+		upcheckparameterid.remove(entry);
+		int questionid=entry.getKey().getQuestionid();
+		int mysize=upcheckparameterid.size()/8;
+		switch (mysize) {
+		case 3:
+			
+			break;
+		case 4:
+			break;
+		default:
+			break;
+		}
+		ReturnInfo infotag=new ReturnInfo(String.valueOf(questionid), 0,process.getquestionbyid(String.valueOf(questionid)));
+		Set<Integer> uncheckedparater=new HashSet<>();
+		for(Parameter parameter:upcheckparameterid.keySet()){
+			uncheckedparater.add(parameter.getParameterid());
+		}
+		infotag.setParameter(converter.intSet2String(parameteridset));
+		infotag.setUncheckparameter(uncheckedparater);
+		infotag.setUsername(usrname);
+		return infotag;		
+		
+	}
 
-				}else {
-					Parameter parame=allparamenter.get(id);
-					if (parame!=null) {
-						//uncheckupperquestion.add(parame.getUpperquestion());
-						upcheckparameterid.add(parame.getParameterid());
+	public ReturnInfo getInfoByPS(Map<Set<Integer>, ParameterSolution> parameter_solutionlist,ParameterSolution firstPS,Map<Parameter, Integer> upcheckparameteridmap,Set<Integer> upcheckparameterid,Map<Integer,Parameter> allparamenter,ProcessFactory process,AboutParametersDAO parameterdao,Set<Integer> parameteridset,AnswerQuestion answer,String usrname,String newgetedparameter) {
+		//MaxUpperQuestion maxtimesquestion=getMaxString(uncheckupperquestion,process.inconversationrecord(senderid));
+		ReturnInfo infotag=null;
+		Set<Parameter> parameterforvaild=new HashSet<>();
+		Map<Set<Integer>, Integer> parametersolutionnewlist2=new HashMap<Set<Integer>, Integer>();
+		for(Integer id:parameteridset){
+			parameterforvaild.add(allparamenter.get(id));
+		}
+		if (newgetedparameter.contains(",")) {
+			String[] parameterarray=newgetedparameter.split(",");
+			for (String string : parameterarray) {
+				parameteridset.add(Integer.valueOf(string));
+				parameterforvaild.add(allparamenter.get(Integer.valueOf(string)));
+			}
+		}else{
+			parameteridset.add(Integer.valueOf(newgetedparameter));	
+		}if (upcheckparameteridmap.isEmpty()) {
+			for(Set<Integer> key: parameter_solutionlist.keySet()){
+				ParameterSolution thisPS=parameter_solutionlist.get(key);
+				if(key.containsAll(parameteridset)){
+					parametersolutionnewlist2.put(key, thisPS.getSolutionrank());
+				}
+			}
+			//从parametersolutionnewlist中取参数list去掉parameteridset中的参数
+			if(parametersolutionnewlist2.isEmpty()){
+				//当前已捕获参数无对应参数集，计算有效参数
+				Map<Integer, Parameter> validaparmetermap=process.getValidparameters(parameter_solutionlist, parameterforvaild);
+				Set<Integer> validparameteridset= new HashSet<Integer>();
+				for (int id:validaparmetermap.keySet()) {
+					validparameteridset.add(id);
+				}
+				for(Set<Integer> key: parameter_solutionlist.keySet()){
+					ParameterSolution thisPS=parameter_solutionlist.get(key);
+					if(key.containsAll(validparameteridset)){
+						parametersolutionnewlist2.put(key, thisPS.getSolutionrank());
+					}
+				}
+				parameteridset=validparameteridset;
+			}
+			for (Set<Integer> parametersolutionset:parametersolutionnewlist2.keySet()) {
+				parametersolutionset.removeAll(parameteridset);//删除已经问出的参数
+				for (Integer parameterid : parametersolutionset) {
+					if (IsInSetOrNot(upcheckparameteridmap,parameterid)) {
+						Parameter parameter=allparamenter.get(parameterid);
+						if (parameter!=null) {
+							upcheckparameteridmap.put(parameter,1);
+						}							
+					}else {
+						Parameter unchecked=getUnchecked(upcheckparameteridmap,parameterid);
+						if (unchecked!=null) {
+							int count=upcheckparameteridmap.get(unchecked);
+							upcheckparameteridmap.put(unchecked, count+1);
+						}							
 					}
 				}
 			}
+		}else{
+			upcheckparameteridmap=sortByValueDesc(upcheckparameteridmap);
+		}			
+		Entry<Parameter, Integer> entry = upcheckparameteridmap.entrySet().iterator().next();
+		//upcheckparameterid.remove(entry);
+		int questionid=entry.getKey().getQuestionid();
+		infotag=new ReturnInfo(String.valueOf(questionid), 0, process.getquestionbyid(String.valueOf(questionid)));
+		ConvertImpl converter=new ConvertImpl();
+		infotag.setParameter(converter.intSet2String(parameteridset));
+		Set<Integer> uncheckedparater=new HashSet<>();
+		for(Parameter uncheck:upcheckparameteridmap.keySet()){
+			uncheckedparater.add(uncheck.getParameterid());
 		}
-		//MaxUpperQuestion maxtimesquestion=getMaxString(uncheckupperquestion,process.inconversationrecord(senderid));
-		ReturnInfo infotag=null;
-		infotag=new ReturnInfo(String.valueOf(questionid), 0, question);
-		infotag.setParameter(newgetedparameter);
-		infotag.setUncheckparameter(parameterdao.updateUncheckParameter(upcheckparameterid, usrname));
-		if (upcheckparameterid.isEmpty()) {//问完了
-			if (infotag.getStatus()==0) {//没有出solution
-				if (parameterdao.checkRemindParameter(infotag.getParameter())) {
-					infotag.setId("remind");
-					infotag.setInfo("推荐就医");
-				}else {
-					infotag.setId("remind");
-					infotag.setInfo("宠友小智！您身边的养宠专家！");
-				}
-			}
-
-		}
+		infotag.setUncheckparameter(parameterdao.updateUncheckParameter(uncheckedparater, usrname));
 		return infotag;
 	}
 	
@@ -518,5 +600,23 @@ public class ProcessFactoryImpl implements ProcessFactory {
 			}
 		}
 		return parametermap;
+	}
+	
+	public boolean IsInSetOrNot(Map<Parameter, Integer> upcheckparameterid,Integer integer){
+		for (Parameter uncheckedParameter : upcheckparameterid.keySet()) {
+			if (uncheckedParameter.getParameterid()==integer) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	public Parameter getUnchecked (Map<Parameter, Integer>  upcheckparameterid,Integer integer){
+		for (Parameter uncheckedParameter : upcheckparameterid.keySet()) {
+			if (uncheckedParameter.getParameterid()==integer) {
+				return uncheckedParameter;
+			}
+		}
+		return null;
 	}
 }

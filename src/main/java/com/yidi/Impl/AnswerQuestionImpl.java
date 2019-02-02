@@ -59,93 +59,62 @@ public class AnswerQuestionImpl implements AnswerQuestion {
 			infotag2.setUncheckparameter(parameterdao.updateUncheckParameter(lastinfo.getUncheckparameter(),sender));
 			return infotag2;
 		}//else{}  问题内参数有1个以上
-		return null;
+		else {
+			Set<Integer> oldparameter=converter.String2intSet(lastinfo.getParameter());
+			List<Integer> relatedparamete=questiondao.gettargetparametelist(lastinfo.getId());
+			oldparameter.add(relatedparamete.get(0));
+			Map<Integer, Parameter> newparameter=new HashMap<>();
+			for(Integer id:oldparameter){
+				newparameter.put(id, allparameters.get(id));
+			}
+			ReturnInfo infotag=process.getReturnMSG(parameter_solutionlist, newparameter, allparameters, process, solutiondao, parameterdao, answer, sender);
+			return infotag;
+		}
 	}
 
 	@Override
 	public ReturnInfo NegativeAnswer(ReturnInfo lastinfo, Map<Integer,Parameter> allparamenter,Map<Set<Integer>, ParameterSolution> parameter_solutionlist,AboutQuestionDAO questiondao, ConvertAdapter converter,
 			ProcessFactory process, AboutSolutionDAO solutiondao, AboutParametersDAO parameterdao,AnswerQuestion answer,String username) {
 		Set<Integer> parameteridset= converter.String2intSet(lastinfo.getParameter());
-		String newgetedparameter="";
-		Set<Integer> upcheckparameterid=new HashSet<Integer>();
-		Map<Set<Integer>, Integer> parametersolutionnewlist=new HashMap<Set<Integer>, Integer>();
-		for(Set<Integer> key: parameter_solutionlist.keySet()){
-			ParameterSolution thisPS=parameter_solutionlist.get(key);
-			if(key.containsAll(parameteridset)){
-				parametersolutionnewlist.put(key, thisPS.getSolutionrank());
-			}
-		}
-		if(parametersolutionnewlist.size()==1) {//目标parametersolution只有一个了return一个solution
-			//Entry<Set<Integer>, Integer> entry = parametersolutionnewlist.entrySet().iterator().next();
-			//ParameterSolution firstPS=parameter_solutionlist.get(entry.getKey());
-			ReturnInfo newinfotag=lastinfo;
-			newinfotag.setStatus(1);
-			newinfotag.setId("remined");
-			newinfotag.setInfo("建议就医");
-			return newinfotag;
-		}
-		parametersolutionnewlist=sortByValueDesc(parametersolutionnewlist);
-		Entry<Set<Integer>, Integer> entry = parametersolutionnewlist.entrySet().iterator().next();
-		ParameterSolution firstPS=parameter_solutionlist.get(entry.getKey());
-		parametersolutionnewlist.remove(entry.getKey());
-		List<PSranklist> nowpsranklist=sortByrank(firstPS.getParameterset());
-		int index=0;
-		int questionid=0;
-		String question="";
-		for(PSranklist thisp:nowpsranklist){
-			if(upcheckparameterid.contains(thisp.getId())){
-				questionid=process.getquestionidbyparameterid(thisp.getId());
-				question=process.getquestionbyid(String.valueOf(questionid));
-			}else {
-				int curquesid=process.getquestionidbyparameterid(thisp.getId());
-				if (answer.IsAskedQuestion(String.valueOf(curquesid), username)) {
-
-				}else {
-					index++;
-					if(index==1) {
-						questionid=process.getquestionidbyparameterid(thisp.getId());
-						question=process.getquestionbyid(String.valueOf(questionid));
-					}else if (index>1) {
-						//uncheckupperquestion.add(allparamenter.get(thisp.getId()).getUpperquestion());
-						Parameter param=allparamenter.get(thisp.getId());
-						if(param!=null){
-							upcheckparameterid.add(param.getParameterid());
+		Set<Integer> oldset=new HashSet<Integer>();
+		Map<Integer, Parameter> newparameteridmap=new HashMap<Integer, Parameter>();
+		List<Integer> list1=questiondao.gettargetparametelist(lastinfo.getId());
+		if (list1.size()>1) {
+			parameteridset.add(list1.get(1));
+		}else {//问题对应的参数只有一个,删除所有跟当前参数有关的unchecked参数		
+			try {
+				oldset=parameteridset;
+				parameteridset.add(list1.get(0));
+				Set<Integer> set2=parameterdao.getrelatedparameters(parameter_solutionlist, parameteridset, allparamenter);
+				Set<Integer> uncheckparameter=new HashSet<>();
+				for(Set<Integer> idset:parameter_solutionlist.keySet()){
+					if (idset.containsAll(oldset)) {
+						if(idset.containsAll(parameteridset)){}else {
+							uncheckparameter.addAll(idset);
 						}
-
 					}
 				}
-			}
-		}
-		for(Set<Integer> key:parametersolutionnewlist.keySet()) {
-			for (Integer id:key) {
-				if (parameteridset.contains(id)) {
-
+				if (!uncheckparameter.isEmpty()) {
+					uncheckparameter.removeAll(set2);
+					uncheckparameter.remove(list1.get(0));
+					uncheckparameter.removeAll(parameteridset);
 				}else {
-					Parameter parame=allparamenter.get(id);
-					if (parame!=null) {
-						//uncheckupperquestion.add(parame.getUpperquestion());
-						upcheckparameterid.add(parame.getParameterid());
-					}
-				}
+					uncheckparameter=lastinfo.getUncheckparameter();
+					uncheckparameter.remove(list1.get(0));
+				}				
+				int questionid=questiondao.getQuestionid(uncheckparameter, allparamenter);
+				String returninfo=questiondao.getQustionStr(String.valueOf(questionid));
+				ReturnInfo infotag=new ReturnInfo(String.valueOf(questionid),0,returninfo);
+				infotag.setUncheckparameter(uncheckparameter);
+				infotag.setParameter(lastinfo.getParameter());
+				return infotag;
+			} catch (SQLException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 		}
-		ReturnInfo infotag=null;
-		infotag=new ReturnInfo(String.valueOf(questionid), 0, question);
-		infotag.setUncheckparameter(parameterdao.updateUncheckParameter(upcheckparameterid,username));
-		if (upcheckparameterid.isEmpty()) {//问完了
-			if (infotag.getStatus()==0) {//没有出solution
-				if (parameterdao.checkRemindParameter(infotag.getParameter())) {
-					infotag.setId("remind");
-					infotag.setInfo("推荐就医");
-				}else {
-					infotag.setId("remind");
-					infotag.setInfo("宠友小智！您身边的养宠专家！");
-				}
-			}
-
-		}
-		infotag.setParameter(newgetedparameter);
-		return infotag;
+		//ReturnInfo infotag=process.getReturnMSG(parameter_solutionlist, newparameteridmap,allparamenter, process, solutiondao, parameterdao, answer, username);
+		return null;
 	}
 
 	//降序
@@ -208,5 +177,12 @@ public class AnswerQuestionImpl implements AnswerQuestion {
 			}
 			ReturnInfo infotag=process.getReturnMSG(parameter_solutionlist, newparameters, allparameters, process, solutiondao, parameterdao, answer, sender);
 			return infotag;
+		}
+
+		@Override
+		public String AnswerByUncheckedparamter(String text, Set<Integer> uncheckedparameter,
+				Map<Integer, Parameter> allparameters) {
+			// TODO Auto-generated method stub
+			return null;
 		}
 }

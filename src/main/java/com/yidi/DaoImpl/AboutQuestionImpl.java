@@ -232,4 +232,33 @@ public class AboutQuestionImpl implements AboutQuestionDAO {
 
 		return null;
 	}
+
+	@Override
+	public List<Integer> gettargetparametelist(String questionid) {
+		List<Integer> list1=new LinkedList<Integer>();
+		String sql="SELECT * FROM ai_qanda.paramenterques_tb where id=?;";
+		DBService helper=new DBService();
+		String[] params= {questionid};
+		ResultSet rs=helper.executeQueryRS(sql, params);
+		try {
+			while(rs.next()) {
+				String[] parameidarray=rs.getString(5).split(",");
+				String[] paramsarrsy=rs.getString(4).split(",");
+				if(parameidarray.length<=paramsarrsy.length) {
+					for(int i=0;i<parameidarray.length;i++) {
+						Parameter p=new Parameter(Integer.valueOf(parameidarray[i]),Integer.valueOf(questionid),paramsarrsy[i], 0, "");
+						list1.add(Integer.valueOf(parameidarray[i]));
+					}
+				}else {
+					for(int i=0;i<paramsarrsy.length;i++) {
+						list1.add(Integer.valueOf(parameidarray[i]));
+					}
+				}
+			}
+		} catch (SQLException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return list1;
+	}
 }

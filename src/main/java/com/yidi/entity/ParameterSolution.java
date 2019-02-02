@@ -1,22 +1,21 @@
 package com.yidi.entity;
 
 import java.util.List;
+import java.util.Set;
 
 public class ParameterSolution {
-	private List<PSranklist> parameterset;
+	private Set<Integer> parameterset;
 	private int solution;
 	private int solutionrank;
 	private String ageperiod;
 	private String sex;
-	public ParameterSolution(List<PSranklist> set1,int solution,int solutionrank){
-		this.parameterset=set1;
+	public ParameterSolution(int solution){
 		this.solution=solution;
-		this.solutionrank=solutionrank;
 	}
-	public List<PSranklist> getParameterset() {
+	public Set<Integer> getParameterset() {
 		return parameterset;
 	}
-	public void setParameterset(List<PSranklist> parameterset) {
+	public void setParameterset(Set<Integer> parameterset) {
 		this.parameterset = parameterset;
 	}
 	public int getSolution() {

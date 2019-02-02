@@ -27,10 +27,10 @@ public class SpecialProcess implements SpecialprocessFactory {
 			while(rs.next()) {
 				PetInfo petInfo=new PetInfo(rs.getString(5), username);
 				try {
-					petInfo.setName(rs.getString(4));
+					petInfo.setName(rs.getString(5));
 				} catch (Exception e) {}
 				try {
-					petInfo.setBirthday(rs.getDate(5));
+					petInfo.setBirthday(rs.getDate(4));
 				} catch (Exception e) {}
 				try {				
 					petInfo.setSex(rs.getInt(6));//1雄2雌

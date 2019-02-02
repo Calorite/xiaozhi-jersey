@@ -16,7 +16,7 @@ import java.util.Map;
 public class DBService {
 
     private static final String DRIVER = "com.mysql.cj.jdbc.Driver";
-    private static final String URLSTR = "jdbc:mysql://localhost/ai_qanda?useUnicode=true&characterEncoding=UTF-8&serverTimezone=GMT";
+    private static final String URLSTR = "jdbc:mysql://47.93.0.77/ai_qanda?useUnicode=true&characterEncoding=UTF-8&serverTimezone=GMT";
     private static final String USERNAME = "root";
     private static final String USERPASSWORD ="474950494";
     private Connection connnection = null;

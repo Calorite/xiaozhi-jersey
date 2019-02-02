@@ -67,4 +67,26 @@ public class ConvertImpl implements ConvertAdapter {
 		return set1;
 	}
 
+	@Override
+	public Set<Integer> MapParameter2intset(Map<Parameter, Integer> map) {
+		Set<Integer> set=new HashSet<>();
+		for (Parameter iterable_element : map.keySet()) {
+			set.add(iterable_element.getParameterid());
+		}
+		return set;
+	}
+
+	@Override
+	public String intSet2String(Set<Integer> set2) {
+		String str="";
+		for(Integer id:set2){
+			if (str.equals("")) {
+				str=String.valueOf(id);
+			}else {
+				str=str+","+String.valueOf(id);
+			}
+		}
+		return str;
+	}
+
 }

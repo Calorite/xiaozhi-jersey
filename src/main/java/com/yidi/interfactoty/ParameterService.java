@@ -26,4 +26,5 @@ public interface ParameterService {
 	Map<Integer, Parameter> getInitialParameters(Map<Integer, Parameter> allparamenter, String text,
 			AboutParametersDAO parametersdao) throws SQLException;
 	Map<Integer, Parameter> parameterInupperquestion(String id);
+	Set<Integer> getrelatedparameters(String id);
 }
